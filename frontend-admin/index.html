@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -72,7 +71,7 @@ th{color:var(--muted);font-weight:500;white-space:nowrap;}
 .item-img{width:64px;height:64px;border-radius:12px;background-size:cover;background-position:center;background-color:var(--soft);flex:none}
 .mono{width:64px;height:64px;border-radius:12px;display:grid;place-items:center;font-weight:bold;font-size:26px;background:var(--soft);color:var(--ink);flex:none}
 .cartbar{display:none;} .scrim{display:none;}
-.cart{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:14px}
+.cart{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:14px; position:sticky; top:12px; max-height:calc(100vh - 24px); overflow:auto;}
 .order-layout{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:20px;align-items:start}
 .qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden}
 .qty button{border:0;background:var(--soft);width:34px;height:34px;cursor:pointer;font-size:18px}
@@ -84,7 +83,24 @@ th{color:var(--muted);font-weight:500;white-space:nowrap;}
 /* 顧客線上點餐樣式 */
 .cus-wrap { max-width: 480px; margin: 0 auto; background: var(--surface); min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
 .cus-head { padding: 20px; border-bottom: 1px solid var(--line); }
+
+/* 列印專屬樣式 */
+#print-zone{display:none;}
+.pt-ticket{padding-bottom:10px;margin-bottom:10px;border-bottom:1px dashed #000;page-break-after:always}
+.pt-ticket:last-child{border-bottom:none}
+.pt-title{text-align:center;font-size:18px;font-weight:bold;margin-bottom:8px;background:#000;color:#fff;padding:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pt-title.inv{background:none;color:#000;border-bottom:2px solid #000}
+.pt-num{font-size:40px;font-weight:bold;text-align:center;margin:15px 0;letter-spacing:2px}
+.pt-row{display:flex;justify-content:space-between;margin:4px 0}
+.pt-item{font-size:16px;font-weight:bold;margin-top:10px}
+.pt-mod{font-size:13px;margin-left:12px}
+.pt-sticker{width:50mm;min-height:40mm;padding:3mm;border:1px dashed #ccc;margin-bottom:10px;page-break-after:always;overflow:hidden;display:flex;flex-direction:column;justify-content:center}
+.pt-stk-head{font-size:13px;font-weight:bold;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:4px;display:flex;justify-content:space-between}
+.pt-stk-name{font-size:18px;font-weight:bold;margin-bottom:4px;line-height:1.2}
+.pt-stk-mod{font-size:12px;line-height:1.3}
+
 @media print{.wrap,.toast,.modal,.scrim,.top-r{display:none!important}body{background:white;padding:0;margin:0}#print-zone{display:block!important; color:#000; font-family:'Courier New', monospace; font-size:14px;}}
+@media (max-width:899px){.order-layout{grid-template-columns:1fr}.cart{position:fixed;left:0;right:0;bottom:0;z-index:30;max-height:88vh;border-radius:18px 18px 0 0;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateY(105%);visibility:hidden;transition:transform .2s}.cart.open{transform:none;visibility:visible}.scrim.on{display:block;position:fixed;inset:0;background:#0007;z-index:20}.cartbar{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:space-between;align-items:center;border:0;background:var(--accent);color:var(--accent-ink);padding:14px 16px;font-weight:700;cursor:pointer}.cartbar.empty{display:none}}
 </style>
 </head>
 <body>
@@ -94,7 +110,7 @@ th{color:var(--muted);font-weight:500;white-space:nowrap;}
 
 <script>
 window.onerror = function(msg, url, line) {
-  document.body.innerHTML = '<div style="position:fixed;inset:0;background:#fde4e1;z-index:9999;padding:30px;color:#b42318;font-family:sans-serif;"><h2 style="margin-top:0">⚠️ 系統載入失敗</h2><p>' + msg + '</p><button onclick="localStorage.clear();location.reload();" class="btn danger">點此重置暫存</button></div>';
+  document.body.innerHTML = '<div style="position:fixed;inset:0;background:#fde4e1;z-index:9999;padding:30px;color:#b42318;font-family:sans-serif;"><h2 style="margin-top:0">⚠️ 系統載入失敗</h2><p>' + msg + '</p><button onclick="localStorage.clear();location.reload();" class="btn danger" style="margin-top:15px;padding:12px 24px;">點此重置暫存 (清空後即可恢復正常)</button></div>';
 };
 
 const LS_REGISTRY = 'pos-registry', LS_CURRENT = 'pos-current-pin';
@@ -104,7 +120,7 @@ const money = n => '$' + Math.round(n).toLocaleString('en-US');
 const hm = t => new Date(t).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
 const mins = t => Math.max(0, Math.floor((Date.now() - t) / 60000));
 
-// 補回遺失的常數定義
+// 系統核心常數
 const ST = { pending: '待確認', making: '製作中', ready: '待取餐', done: '已完成', cancelled: '已取消' };
 const TY = { dine: '內用', take: '外帶', deliv: '外送' };
 const PAYS = { unpaid: '未付款', paid: '已付款', refunded: '已退款' };
@@ -122,9 +138,9 @@ function seed(storeName) {
     groups: { size: { label: '尺寸', req: true, multi: false, ch: [['中杯', 0], ['大杯', 10]] } }, 
     menu: [ { id: 'm1', cat: '主食', name: '滷肉飯', price: 90, desc: '招牌滷肉飯', opts: [], out: false }, { id: 'm2', cat: '飲品', name: '古早味紅茶', price: 30, desc: '', opts: ['size'], out: false } ], 
     orders: [], tables: {}, nextNo: 104,
-    settings: { open: true, hours: '10:30 – 21:00', managerPin: '8888', autoAcceptO2O: false, tables: 8, printSize: '80mm', address: '新北市蘆洲區得勝街80號', phone: '0988814805' },
+    settings: { open: true, hours: '10:30 – 21:00', managerPin: '8888', autoAcceptO2O: false, tables: 8, printSize: '80mm', address: '新北市蘆洲區得勝街80號', phone: '0988814805', onlinePromo: '滿500折50' },
     staff: [{ name: '店長', role: 'admin', perms:['all'] }, { name: '店員', role: 'staff', perms:['checkout'] }],
-    log: []
+    log: [], coupons: [{code:'C50', desc:'滿500折50', type:'amt', v:50, min:500, on:true}], members: {'0912345678':{name:'王小姐',points:36}}, menuTrans: {}
   };
 }
 
@@ -134,10 +150,13 @@ function loadStore(pin) {
 }
 
 S = loadStore(currentPin);
+
+// 全域 UI 狀態
 const ui = { 
   locked: true, tab: 'counter', atab: 'report', inputPin: '', 
   cart: [], co: { type: 'take', table: '1', name: '', phone: '', pay: 'cash', note: '' }, cartOpen: false, cview: 'list', ofilter: 'all', oq: '',
-  editMenu: null, editGroup: null, cusLoginPhone: '', modal: null 
+  editMenu: null, editGroup: null, cusLoginPhone: '', modal: null, newStaff: {name:'', role:'staff'}, newStoreName: '', newStorePin: '', newCoupon: {code:'', desc:'', type:'amt', v:10, min:0},
+  op: 0, pendingOp: null
 };
 
 const cur = () => S.staff[ui.op] || S.staff[0];
@@ -169,11 +188,12 @@ function lineDesc(l) { const a = []; Object.keys(l.sel || {}).forEach(g => { (l.
 function shell() {
   if (ui.locked) {
     return `<div style="display:grid;place-items:center;min-height:80vh;"><div class="card" style="text-align:center;width:min(320px,100%)">
-      <h2>🔒 系統登入</h2><p class="muted">密碼 1234 (系統管理 0000)</p>
-      <input type="password" id="login-pin" class="inp" style="text-align:center;font-size:24px;margin:12px 0;" placeholder="請輸入密碼">
-      <button class="btn pri" style="width:100%" data-act="submitPin">進入系統</button></div></div>`;
+      <h2>🔒 系統登入</h2><p class="muted">門市預設密碼 1234 (系統管理 0000)</p>
+      <input type="password" id="login-pin" class="inp" style="text-align:center;font-size:24px;margin:12px 0;" placeholder="請輸入密碼" onkeypress="if(event.key==='Enter') document.getElementById('btn-login').click()">
+      <button id="btn-login" class="btn pri" style="width:100%" data-act="submitPin">進入系統</button></div></div>`;
   }
-  if (isSysAdmin) return `<header class="top"><div class="brand"><span class="mark">系</span><div><b>系統管理員</b></div></div><div class="top-r"><button class="btn sm danger" data-act="lockAdmin">登出</button></div></header><main><div class="wrap">${vSysAdmin()}</div></main>`;
+  
+  if (isSysAdmin) return `<header class="top"><div class="brand"><span class="mark">系</span><div><b>系統管理員</b></div></div><div class="top-r"><button class="btn sm danger" data-act="lockAdmin">登出</button></div></header><main><div class="wrap">${vSysAdmin()}</div></main>${modalHtml()}`;
   if (ui.tab === 'customer') return vCustomer() + modalHtml();
 
   const pend = S.orders.filter(o => o.status === 'pending').length;
@@ -187,7 +207,7 @@ function shell() {
 
   return `<div class="wrap"><header class="top"><div class="brand"><span class="mark">商</span><div><b>${esc(S.storeName)} · 商家後台</b></div></div>
     <div class="top-r">
-      <button class="btn sm" data-act="openCustomerView" style="background:var(--brand-orange);color:#fff;border:none;">📱 線上點餐</button>
+      <button class="btn sm" data-act="openCustomerView" style="background:var(--brand-orange);color:#fff;border:none;">📱 線上點餐預覽</button>
       <label class="op">角色：<select data-act="requestRoleChange">${S.staff.map((s, i) => `<option value="${i}" ${i === ui.op ? 'selected' : ''}>${esc(s.name)} (${ROLE[s.role]||s.role})</option>`).join('')}</select></label>
       <button class="btn sm danger" data-act="lockAdmin">鎖定登出</button>
     </div>
@@ -208,25 +228,27 @@ function vCounter() {
     return true;
   });
   const fl = [['all', '全部'], ['active', '進行中'], ['unpaid', '待付款'], ['done', '已完成'], ['cancelled', '已取消']];
-  return `<div class="row sp"><div class="row grow"><button class="btn pri" data-act="cnew">＋ 櫃台點餐／現場下單</button><input id="oq" class="inp" style="max-width:320px" type="search" placeholder="搜尋單號、桌號..." value="${esc(ui.oq)}" data-bind="oq"></div></div>
+  return `<div class="row sp"><div class="row grow"><button class="btn pri" data-act="cnew">＋ 櫃台點餐／現場下單</button><input id="oq" class="inp" style="max-width:320px" type="search" placeholder="搜尋單號、桌號..." value="${esc(ui.oq)}" data-bind="ui.oq"></div></div>
     <div class="chips">${fl.map(x => `<button class="chip ${f === x[0] ? 'on' : ''}" data-act="ofilter" data-v="${x[0]}">${x[1]}</button>`).join('')}</div>
     ${list.length ? `<div class="ocards">${list.map(orderCard).join('')}</div>` : `<div class="empty-state">目前無符合條件的訂單</div>`}`;
 }
 
 function ordering() {
-  const c = calc();
+  const c = calc(); const n = ui.cart.reduce((a, l) => a + l.qty, 0);
   return `<div class="order-layout"><section><div class="toolbar"><input class="inp" type="search" placeholder="搜尋菜單品項..."></div>
     <div class="menu-grid">${S.menu.map(m => `<article class="item ${m.out ? 'out' : ''}">${m.img ? `<div class="item-img" style="background-image:url('${m.img}')"></div>` : `<div class="mono">${esc(m.name[0])}</div>`}<div><h3>${esc(m.name)}</h3><div class="ib"><b>${money(m.price)}</b>${m.opts.length ? '<small>可客製</small>' : ''}</div></div><button class="btn pri" data-act="add" data-id="${m.id}" ${m.out ? 'disabled' : ''}>${m.out ? '售完' : m.opts.length ? '選擇' : '加入'}</button></article>`).join('')}</div></section>
-    <aside class="cart"><div class="cart-head"><h2>購物車</h2><button class="btn sm" data-act="cback">返回列表</button></div>
+    <aside class="cart ${ui.cartOpen ? 'open' : ''}"><div class="cart-head"><h2>購物車</h2><button class="btn sm" data-act="cback">返回列表</button></div>
     ${ui.cart.map((l, i) => `<div class="cline"><b>${esc(l.name)}</b><span class="num">${money(l.unit * l.qty)}</span>${lineDesc(l) || l.note ? `<small style="grid-column:1/-1;">${esc(lineDesc(l))}${l.note ? ' / ' + esc(l.note) : ''}</small>` : ''}
-    <div class="qty" style="grid-column:1/-1;"><button data-act="cqty" data-i="${i}" data-d="-1">−</button><span>${l.qty}</span><button data-act="cqty" data-i="${i}" data-d="1">+</button><button class="btn sm" data-act="crm" data-i="${i}" style="margin-left:auto;">移除</button></div></div>`).join('')}
+    <div class="qty" style="grid-column:1/-1; margin-top:4px;"><button data-act="cqty" data-i="${i}" data-d="-1">−</button><span>${l.qty}</span><button data-act="cqty" data-i="${i}" data-d="1">+</button><button class="btn sm danger" data-act="crm" data-i="${i}" style="margin-left:auto;">移除</button></div></div>`).join('')}
     ${ui.cart.length ? `<div style="border-top:1px solid var(--line);padding-top:12px;">
-      <select id="co-type" class="inp" data-bind="co.type"><option value="take" ${ui.co.type==='take'?'selected':''}>外帶</option><option value="dine" ${ui.co.type==='dine'?'selected':''}>內用</option></select>
-      ${ui.co.type==='dine'?`<label class="f">桌號<select id="co-table" class="inp" data-bind="co.table">${Array.from({length:S.settings.tables},(_,i)=>`<option value="${i+1}" ${String(ui.co.table)===String(i+1)?'selected':''}>${i+1}桌</option>`).join('')}</select></label>`:''}
-      <label class="f">付款方式<select id="co-pay" class="inp" data-bind="co.pay"><option value="cash">現金</option><option value="mobile">行動支付</option><option value="later">稍後付款</option></select></label>
+      <select class="inp" data-bind="ui.co.type"><option value="take" ${ui.co.type==='take'?'selected':''}>外帶</option><option value="dine" ${ui.co.type==='dine'?'selected':''}>內用</option></select>
+      ${ui.co.type==='dine'?`<label class="f">桌號<select id="co-table" class="inp">${Array.from({length:S.settings.tables},(_,i)=>`<option value="${i+1}" ${String(ui.co.table)===String(i+1)?'selected':''}>${i+1}桌</option>`).join('')}</select></label>`:''}
+      <label class="f">付款方式<select id="co-pay" class="inp"><option value="cash">現金</option><option value="mobile">行動支付</option><option value="later">稍後付款</option></select></label>
       <div class="sum"><div><span>小計</span><span>${money(c.sub)}</span></div><div class="tot"><span>合計</span><span>${money(c.total)}</span></div></div>
       <button class="btn pri" style="width:100%;height:46px;" data-act="placeCounter">建立訂單</button>
-    </div>` : '<div class="muted" style="text-align:center;padding:20px;">購物車為空</div>'}</aside></div>`;
+    </div>` : '<div class="muted" style="text-align:center;padding:20px;">購物車為空</div>'}</aside></div>
+    <div class="scrim ${ui.cartOpen ? 'on' : ''}" data-act="cartclose"></div>
+    <button class="cartbar ${n ? '' : 'empty'}" data-act="cartopen"><span>查看購物車 · ${n} 項</span><span>${money(c.total)}</span></button>`;
 }
 
 function orderCard(o) {
@@ -252,7 +274,7 @@ function vKitchen() {
   const by = s => S.orders.filter(o => o.status === s).sort((a, b) => a.t - b.t);
   const kCard = o => `<article class="oc"><div class="row sp"><span class="no">#${o.no}</span><span class="pill">${mins(o.t)} 分鐘</span></div>
     <div><b>${TY[o.type]}${o.type==='dine'?' · '+o.table+'桌':''}</b></div><div class="olines">${o.lines.map(l=>`<div>${esc(l.name)} x${l.qty}</div>`).join('')}</div>
-    ${o.status!=='done'?`<button class="btn pri" style="min-height:44px;" data-act="adv" data-no="${o.no}">${o.status==='pending'?'接單製作':'完成製作'}</button>`:''}</article>`;
+    ${o.status!=='done'?`<button class="btn pri" style="min-height:44px;width:100%" data-act="adv" data-no="${o.no}">${o.status==='pending'?'接單製作':'完成製作'}</button>`:''}</article>`;
   return `<div class="kan">
     <section class="kcol"><h2><span>待確認新單</span></h2>${by('pending').map(kCard).join('')||'<p class="muted">無</p>'}</section>
     <section class="kcol"><h2><span>製作中</span></h2>${by('making').map(kCard).join('')||'<p class="muted">無</p>'}</section>
@@ -277,14 +299,23 @@ function vTables() {
 
 /* ================= 3. 後台管理 ================= */
 function vAdmin() {
-  const tabs = [['report', '營運報表'], ['menu', '商品與規格'], ['order_set', '點餐設定'], ['staff', '員工與權限'], ['log', '操作紀錄']];
+  const tabs = [
+    ['report', '營運報表'], ['menu', '商品管理'], ['order_set', '點餐設定'], 
+    ['staff', '員工與權限'], ['store', '門市管理'], ['customer', '顧客管理'], 
+    ['o2o', 'O2O管理'], ['apps', '應用程式'], ['lang', '語言翻譯'], ['log', '操作紀錄']
+  ];
   const sub = `<div class="subtabs" style="margin-bottom:16px;">${tabs.map(t => `<button class="chip ${ui.atab === t[0] ? 'on' : ''}" data-act="atab" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>`;
   let b = '';
   if (ui.atab === 'report') b = aReport();
   else if (ui.atab === 'menu') b = aMenu();
   else if (ui.atab === 'order_set') b = aOrderSet();
   else if (ui.atab === 'staff') b = aStaff();
-  else if (ui.atab === 'log') b = `<div class="card"><h2>操作紀錄</h2>${S.log.map(l=>`<p class="muted" style="margin-bottom:4px;">[${hm(l.t)}] ${esc(l.who)}：${esc(l.msg)}</p>`).join('')}</div>`;
+  else if (ui.atab === 'store') b = aStore();
+  else if (ui.atab === 'customer') b = aCustomer();
+  else if (ui.atab === 'o2o') b = aO2O();
+  else if (ui.atab === 'apps') b = aApps();
+  else if (ui.atab === 'lang') b = aLang();
+  else if (ui.atab === 'log') b = `<div class="card scroll"><h2>操作紀錄</h2><table><thead><tr><th>時間</th><th>人員</th><th>紀錄</th></tr></thead><tbody>${S.log.map(l=>`<tr><td>${hm(l.t)}</td><td>${esc(l.who)}</td><td>${esc(l.msg)}</td></tr>`).join('')}</tbody></table></div>`;
   return sub + b;
 }
 
@@ -329,8 +360,8 @@ function aMenu() {
   let h = `<div class="row sp"><h2>商品與菜單管理</h2><button class="btn pri" data-act="openMenuEdit">＋ 新增餐點/套餐</button></div>`;
   h += `<div class="card scroll" style="margin-top:14px;"><table><thead><tr><th>品名</th><th>分類</th><th class="num">單價</th><th>操作</th></tr></thead><tbody>
     ${S.menu.map(m => `<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.cat)}</td><td class="num">${money(m.price)}</td>
-    <td><button class="btn sm" data-act="openMenuEdit" data-id="${m.id}">編輯</button></td></tr>`).join('')}</tbody></table></div>`;
-  h += `<div class="row sp" style="margin-top:24px;"><h2>客製化規格 (自動換行)</h2><button class="btn pri" data-act="openGroupEdit">＋ 新增規格</button></div>
+    <td><button class="btn sm" data-act="openMenuEdit" data-id="${m.id}">編輯</button> <button class="btn sm ${m.out?'danger':''}" data-act="toggleout" data-id="${m.id}">${m.out?'停售':'正常'}</button></td></tr>`).join('')}</tbody></table></div>`;
+  h += `<div class="row sp" style="margin-top:24px;"><h2>客製化規格設定 (自動換行)</h2><button class="btn pri" data-act="openGroupEdit">＋ 新增規格</button></div>
     <div class="card scroll" style="margin-top:14px;"><table><thead><tr><th>名稱</th><th>明細</th><th>操作</th></tr></thead><tbody>
     ${Object.keys(S.groups).map(gKey => `<tr><td><b>${esc(S.groups[gKey].label)}</b></td><td class="muted">${esc(S.groups[gKey].ch.map(c=>`${c[0]}(+${c[1]})`).join('、'))}</td>
     <td><button class="btn sm" data-act="openGroupEdit" data-id="${gKey}">編輯</button></td></tr>`).join('')}</tbody></table></div>`;
@@ -339,32 +370,113 @@ function aMenu() {
 
 function aOrderSet() {
   const s = S.settings;
-  return `<div class="card"><h2>點餐與自助服務設定</h2>
-    <div style="display:grid; gap: 16px; margin-top:16px;">
-      <label class="row" style="cursor:pointer;"><input type="checkbox" style="width:20px;height:20px;" data-bind="S.settings.autoAcceptO2O" data-save ${s.autoAcceptO2O?'checked':''}> <b>開啟外送平台全自動接單</b></label>
-      <div class="grid2" style="border-top:1px dashed var(--line); padding-top:16px;">
-        <label class="f">營業時間<input class="inp" data-bind="S.settings.hours" data-save value="${esc(s.hours)}"></label>
-        <label class="f">店面地址<input class="inp" data-bind="S.settings.address" data-save value="${esc(s.address)}"></label>
-      </div>
+  return `<div class="card"><h2>線上點餐與營業設定</h2>
+    <div class="grid2" style="margin-top:16px;">
+      <label class="f">營業時間<input class="inp" data-bind="S.settings.hours" data-save value="${esc(s.hours)}"></label>
+      <label class="f">列印單據尺寸<select class="inp" data-bind="S.settings.printSize" data-save><option value="80mm" ${s.printSize==='80mm'?'selected':''}>80mm</option><option value="58mm" ${s.printSize==='58mm'?'selected':''}>58mm</option></select></label>
     </div>
+    <label class="f" style="margin-top:12px;">線上點餐優惠須知<textarea class="inp" data-bind="S.settings.onlinePromo" data-save style="min-height:60px;">${esc(s.onlinePromo)}</textarea></label>
+  </div>`;
+}
+
+function aStore() {
+  const s = S.settings;
+  return `<div class="card"><h2>門市基本資料管理</h2>
+    <div class="grid2" style="margin-top:14px">
+      <label class="f">門市名稱 (會連動系統全域)<input class="inp" data-bind="S.storeName" data-syncname="true" value="${esc(S.storeName)}"></label>
+      <label class="f">門市地址<input class="inp" data-bind="S.settings.address" data-save value="${esc(s.address)}"></label>
+      <label class="f">連絡電話<input class="inp" data-bind="S.settings.phone" data-save value="${esc(s.phone)}"></label>
+      <label class="f">統一編號<input class="inp" data-bind="S.settings.taxId" data-save value="${esc(s.taxId||'')}"></label>
+    </div>
+  </div>`;
+}
+
+function aCustomer() {
+  return `<div class="card scroll"><h2>顧客管理 (會員資料庫)</h2>
+    <table><thead><tr><th>手機號碼</th><th>姓名</th><th>累積點數</th><th>操作</th></tr></thead><tbody>
+    ${Object.keys(S.members).map(phone => {
+      const m = S.members[phone];
+      return `<tr><td>${phone}</td><td>${esc(m.name)}</td><td><b style="color:var(--brand-orange);">${m.points} 點</b></td>
+      <td>
+        <button class="btn sm" data-act="openAdjustPoints" data-phone="${phone}">調整點數</button>
+        <button class="btn sm danger" data-act="delMember" data-phone="${phone}">刪除</button>
+      </td></tr>`;
+    }).join('')}
+    </tbody></table>
+    <div class="grid2" style="margin-top:14px; padding-top:14px; border-top:1px dashed var(--line)">
+      <label class="f">手機號碼<input class="inp" id="nm-phone" placeholder="09..."></label>
+      <label class="f">姓名<input class="inp" id="nm-name" placeholder="王大明"></label>
+    </div><button class="btn pri sm" style="margin-top:10px" data-act="addMember">＋ 新增會員</button>
+  </div>`;
+}
+
+function aO2O() {
+  const s = S.settings;
+  return `<div class="card"><h2>O2O 外送與第三方平台整合</h2>
+    <label class="row card" style="cursor:pointer; background:#f8f9fa;">
+      <input type="checkbox" style="width:20px;height:20px;" data-bind="S.settings.autoAcceptO2O" data-save ${s.autoAcceptO2O?'checked':''}> 
+      <b>開啟全自動接單 (外送訂單進件後自動轉為「製作中」)</b>
+    </label>
+  </div>`;
+}
+
+function aApps() {
+  return `<div class="card"><h2>應用程式與擴充市集</h2>
+    <div class="grid2" style="margin-top:14px;">
+      <div class="card" style="border: 2px solid var(--ok); text-align:center;"><h3>LINE 官方帳號點餐模組</h3><p class="muted" style="color:var(--ok)">已啟用</p></div>
+      <div class="card" style="text-align:center;"><h3>電子發票加值中心</h3><p class="muted">未啟用</p><button class="btn sm pri" style="margin-top:10px;" onclick="alert('轉接申請表單中...')">申請開通</button></div>
+    </div>
+  </div>`;
+}
+
+function aLang() {
+  if(!S.menuTrans) S.menuTrans = {};
+  return `<div class="card scroll"><h2>多國語言菜單翻譯</h2>
+    <table><thead><tr><th>原品項名稱</th><th>英文翻譯 (English)</th><th>日文翻譯 (日本語)</th></tr></thead><tbody>
+    ${S.menu.map(m => `<tr><td><b>${esc(m.name)}</b></td>
+      <td><input class="inp" data-bind="S.menuTrans.${m.id}.en" data-save value="${esc((S.menuTrans[m.id]&&S.menuTrans[m.id].en)||'')}"></td>
+      <td><input class="inp" data-bind="S.menuTrans.${m.id}.ja" data-save value="${esc((S.menuTrans[m.id]&&S.menuTrans[m.id].ja)||'')}"></td>
+    </tr>`).join('')}
+    </tbody></table>
   </div>`;
 }
 
 function vSysAdmin() {
   return `<div class="card" style="margin-top:20px"><h2>👑 系統管理員 - 商店總覽</h2>
     <table style="margin-top:14px"><thead><tr><th>分店名稱</th><th>登入密碼 (PIN)</th><th>操作</th></tr></thead><tbody>
-    ${Object.keys(registry).map(p => `<tr><td><b>${esc(registry[p])}</b></td><td>${p}</td><td><button class="btn sm" data-act="sysLoginStore" data-pin="${p}">登入</button></td></tr>`).join('')}
-    </tbody></table></div>`;
+    ${Object.keys(registry).map(p => `<tr><td><b>${esc(registry[p])}</b></td><td>${p}</td><td><button class="btn sm" data-act="sysLoginStore" data-pin="${p}">登入</button> <button class="btn sm danger" data-act="delStore" data-pin="${p}" ${Object.keys(registry).length <= 1 ? 'disabled' : ''}>刪除</button></td></tr>`).join('')}
+    </tbody></table>
+    <div class="grid2" style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)">
+      <label class="f">新分店名稱<input class="inp" id="ns-name" placeholder="例如：中山分店"></label>
+      <label class="f">店家登入密碼<input class="inp" id="ns-pin" placeholder="輸入數字，如：8888"></label>
+    </div><button class="btn pri sm" style="margin-top:10px" data-act="addStore">＋ 新增店家</button></div>`;
 }
 
 /* ================= 顧客線上點餐頁面 ================= */
 function vCustomer() {
   const s = S.settings;
+  const d = new Date(); const dStr = `${d.getMonth()+1}月 ${d.getDate()} 週${['日','一','二','三','四','五','六'][d.getDay()]}`;
+
+  let memberHtml = '';
+  if (ui.cusLoginPhone && S.members[ui.cusLoginPhone]) {
+    const mem = S.members[ui.cusLoginPhone];
+    memberHtml = `<div style="background:#e8f5e9; color:#2e7d32; padding:12px; border-radius:8px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+      <div><b>👋 ${esc(mem.name)}</b> 您好！<br>累積點數：<b>${mem.points}</b> 點</div>
+      <button class="btn sm" data-act="doCusLogout" style="background:#fff;">登出</button>
+    </div>`;
+  } else {
+    memberHtml = `<div style="background:#fff3cd; color:#856404; padding:12px; border-radius:8px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+      <div><b>專屬優惠與集點</b><br><small>尚未註冊？請洽店內人員</small></div>
+      <button class="btn sm" data-act="openCusLogin" style="background:#ffc107; color:#000; border:none;">會員登入</button>
+    </div>`;
+  }
+
   return `<div style="background: #f5f6f8; min-height: 100vh; padding-top: 20px;">
     <div class="cus-wrap">
       <div class="cus-head">
         <button class="btn sm" data-act="exitCustomerView" style="margin-bottom: 16px;">← 返回店家後台</button>
         <h1>${esc(S.storeName)} <span style="font-size:14px;color:var(--ok);float:right;">線上點餐</span></h1>
+        ${memberHtml}
         <div class="cus-info"><div><span>📍 ${esc(s.address)}</span></div><div><span>📞 ${esc(s.phone)}</span></div></div>
       </div>
       <div style="padding: 20px;">
@@ -415,9 +527,33 @@ function modalHtml() {
       <div class="row sp"><div class="qty"><button data-act="mqty" data-d="-1">−</button><span>${ui.modal.qty}</span><button data-act="mqty" data-d="1">+</button></div>
       <button class="btn pri" style="min-height:46px" data-act="madd">加入購物車 ${money(price)}</button></div></div></div>`;
   }
+  
+  // ★ 完整還原：四顆列印按鈕 ★
   if (ui.modal.type === 'print') {
     return `<div class="modal" data-act="mclose"><div class="mp" data-stop><h2>🖨️ 列印單據 (#${ui.modal.no})</h2>
-      <div class="grid2"><button class="btn pri" data-act="doprint" style="min-height:50px">🎫 號碼單/明細</button></div><button class="btn" data-act="mclose">取消</button></div></div>`;
+      <p class="muted">目前設定尺寸為：${S.settings.printSize||'80mm'}</p>
+      <div class="grid2">
+        <button class="btn pri" data-act="doprint" data-no="${ui.modal.no}" data-ptype="num" style="min-height:50px; background:#c4332a; border-color:#c4332a;">🎫 號碼單</button>
+        <button class="btn pri" data-act="doprint" data-no="${ui.modal.no}" data-ptype="kit" style="min-height:50px; background:#c4332a; border-color:#c4332a;">🍳 廚師單</button>
+        <button class="btn pri" data-act="doprint" data-no="${ui.modal.no}" data-ptype="cus" style="min-height:50px; background:#c4332a; border-color:#c4332a;">🧾 客戶明細</button>
+        <button class="btn pri" data-act="doprint" data-no="${ui.modal.no}" data-ptype="stk" style="min-height:50px; background:#c4332a; border-color:#c4332a;">🏷️ 貼紙</button>
+      </div><button class="btn" style="margin-top:10px;width:100%" data-act="mclose">取消</button></div></div>`;
+  }
+
+  if (ui.modal.type === 'adjustPoints') {
+    const p = ui.modal.phone; const m = S.members[p];
+    return `<div class="modal" data-act="mclose"><div class="mp" data-stop><h2>調整會員點數</h2>
+      <p>會員：<b>${esc(m.name)}</b> (${p})</p><p>目前點數：<b style="color:var(--brand-orange);">${m.points}</b></p>
+      <label class="f">調整數量 <small>(正數為增加，負數為扣除)</small><input type="number" id="adj-pts" class="inp" placeholder="例如：100 或 -50"></label>
+      <div class="row sp" style="margin-top:16px;"><button class="btn pri" style="width:48%;" data-act="savePoints" data-phone="${p}">確認調整</button><button class="btn" style="width:48%;" data-act="mclose">取消</button></div>
+    </div></div>`;
+  }
+
+  if (ui.modal.type === 'cusLogin') {
+    return `<div class="modal" data-act="mclose"><div class="mp" data-stop style="text-align:center"><h2>👤 會員登入</h2>
+      <p class="muted" style="margin-bottom:14px;">請輸入您的手機號碼。<br><small>(測試帳號請輸入 0912345678)</small></p>
+      <input type="tel" class="inp" style="text-align:center;font-size:20px;letter-spacing:2px;margin-bottom:12px;" id="login-phone" value="">
+      <button class="btn pri" style="width:100%" data-act="doCusLogin">登入</button></div></div>`;
   }
   return '';
 }
@@ -432,18 +568,44 @@ window.checkDynamicRow = function() {
 /* ================= 動作與事件 ================= */
 const H = {
   submitPin: () => {
-    const p = $('#login-pin') ? $('#login-pin').value.trim() : '';
-    if (p === MASTER_PIN) { ui.locked = false; isSysAdmin = true; toast('系統管理員登入'); return; }
-    if (p === '1234' && !registry['1234']) { registry['1234'] = '巷口食堂 (總店)'; localStorage.setItem(LS_REGISTRY, JSON.stringify(registry)); }
-    if (registry[p]) { currentPin = p; S = loadStore(currentPin); ui.locked = false; isSysAdmin = false; toast('登入成功'); }
-    else toast('密碼錯誤，測試請輸入 1234');
+    const pInput = document.getElementById('login-pin');
+    const p = pInput ? pInput.value.trim() : ui.inputPin.trim();
+
+    if (p === MASTER_PIN) { ui.locked = false; isSysAdmin = true; ui.inputPin = ''; toast('✅ 系統管理員登入'); return; }
+    if (p === '1234') { 
+      if (!registry['1234']) { registry['1234'] = '巷口食堂 (總店)'; localStorage.setItem(LS_REGISTRY, JSON.stringify(registry)); }
+      currentPin = '1234'; S = loadStore(currentPin); ui.locked = false; isSysAdmin = false; ui.inputPin = ''; toast('✅ 登入成功'); return;
+    }
+
+    if (registry[p]) { currentPin = p; S = loadStore(currentPin); ui.locked = false; isSysAdmin = false; ui.inputPin = ''; toast('✅ 登入成功'); }
+    else toast('❌ 密碼錯誤，測試請輸入 1234');
   },
   lockAdmin: () => { ui.locked = true; isSysAdmin = false; toast('已登出'); },
   atab: el => { ui.atab = el.dataset.v; }, mclose: () => { ui.modal = null; },
   mtab: el => { ui.tab = el.dataset.v; }, openCustomerView: () => { ui.tab = 'customer'; }, exitCustomerView: () => { ui.tab = 'counter'; },
   
+  // 顧客登入
+  openCusLogin: () => { ui.modal = { type: 'cusLogin', phone: '' }; },
+  doCusLogin: () => {
+    const p = ($('#login-phone')?$('#login-phone').value:'').trim();
+    if(!p) return toast('請輸入手機號碼');
+    if(S.members && S.members[p]) { ui.cusLoginPhone = p; ui.modal = null; toast('登入成功'); } 
+    else { toast('找不到此會員，請洽詢店內人員'); }
+  },
+  doCusLogout: () => { ui.cusLoginPhone = ''; toast('已登出'); },
+
+  // 店家管理
+  addStore: () => {
+    const name = ($('#ns-name') ? $('#ns-name').value : '').trim(), pin = ($('#ns-pin') ? $('#ns-pin').value : '').trim();
+    if (!name || !pin) return toast('請填寫名稱與密碼'); 
+    if (registry[pin]) return toast('密碼已存在');
+    registry[pin] = name; localStorage.setItem('pos-data-' + pin, JSON.stringify(seed(name))); 
+    saveStore(); toast('新增店家成功'); $('#ns-name').value = ''; $('#ns-pin').value = '';
+  },
   sysLoginStore: el => { currentPin = el.dataset.pin; S = loadStore(currentPin); isSysAdmin = false; saveStore(); toast('切換成功'); },
-  
+  delStore: el => { const p = el.dataset.pin; if (confirm('確定刪除商店所有資料嗎？')) { delete registry[p]; localStorage.removeItem('pos-data-' + p); saveStore(); toast('商店已刪除'); } },
+
+  // 員工管理
   addStaff: () => {
     const name = $('#ns-name').value.trim(); const role = $('#ns-role').value;
     if(!name) return toast('請輸入姓名');
@@ -452,6 +614,25 @@ const H = {
   },
   delStaff: el => { S.staff.splice(Number(el.dataset.i), 1); saveStore(); toast('已刪除'); },
 
+  // 會員管理與點數調整
+  addMember: () => {
+    const p = ($('#nm-phone')?$('#nm-phone').value:'').trim(), n = ($('#nm-name')?$('#nm-name').value:'').trim();
+    if(!p || !n) return toast('請填寫手機與姓名'); if(S.members[p]) return toast('該手機已註冊');
+    S.members[p] = { name: n, points: 0 }; saveStore(); toast('會員新增成功'); $('#nm-phone').value = ''; $('#nm-name').value = '';
+  },
+  delMember: el => { if(confirm('確定刪除會員嗎？')) { delete S.members[el.dataset.phone]; saveStore(); toast('會員已刪除'); } },
+  openAdjustPoints: el => { ui.modal = { type: 'adjustPoints', phone: el.dataset.phone }; },
+  savePoints: el => {
+    const p = el.dataset.phone; const pts = Number($('#adj-pts') ? $('#adj-pts').value : 0);
+    if (isNaN(pts)) return toast('請輸入有效數字');
+    if (S.members[p]) {
+      S.members[p].points += pts;
+      if (S.members[p].points < 0) S.members[p].points = 0;
+      saveStore(); ui.modal = null; toast('✅ 點數已更新');
+    }
+  },
+
+  // 規格與菜單
   openGroupEdit: el => {
     const id = el.dataset.id; if(id) ui.editGroup = { id, ...S.groups[id] }; else ui.editGroup = { id: '', label: '', req: false, multi: false, ch: [] };
     ui.modal = { type: 'editGroup' };
@@ -464,7 +645,7 @@ const H = {
     });
     if(!ch.length) return toast('請至少填寫一個選項');
     const id = ui.editGroup.id || 'g_' + Date.now();
-    S.groups[id] = { label, req: $('#eg-req').value==='true', multi: $('#eg-multi').value==='true', ch };
+    S.groups[id] = { label, req: false, multi: false, ch };
     saveStore(); ui.modal = null; toast('規格已儲存');
   },
   openMenuEdit: el => {
@@ -478,12 +659,18 @@ const H = {
     if(ui.editMenu.id) { const idx = S.menu.findIndex(x=>x.id===mData.id); S.menu[idx] = mData; } else S.menu.push(mData);
     saveStore(); ui.modal = null; toast('菜單已更新');
   },
+  toggleout: el => { const m = S.menu.find(x => x.id === el.dataset.id); m.out = !m.out; saveStore(); toast(m.out?'已設定為停售':'已恢復供應'); },
 
   // POS 接單邏輯
   cnew: () => { ui.cview = 'new'; }, cback: () => { ui.cview = 'list'; ui.cartOpen = false; }, ofilter: el => { ui.ofilter = el.dataset.v; },
   add: el => {
     const it = S.menu.find(m => m.id === el.dataset.id); if (!it || it.out) return;
-    if (!it.opts.length) { ui.cart.push({ id: it.id, name: it.name, sel: {}, qty: 1, note: '', unit: it.price }); toast('已加入 ' + it.name); return; }
+    if (!it.opts.length) { 
+      const l = { id: it.id, name: it.name, sel: {}, qty: 1, note: '', unit: it.price }; 
+      const ex = ui.cart.find(x => x.id === l.id && x.note === l.note);
+      if (ex) ex.qty += 1; else ui.cart.push(l);
+      toast('已加入 ' + it.name); return; 
+    }
     const sel = {}; it.opts.forEach(g => { const G = S.groups[g]; if (G && G.req && G.ch.length) sel[g] = [G.ch[0][0]]; });
     ui.modal = { type: 'item', id: it.id, sel, qty: 1, note: '' };
   },
@@ -494,28 +681,54 @@ const H = {
   mqty: el => { ui.modal.qty = Math.max(1, ui.modal.qty + Number(el.dataset.d)); },
   madd: () => {
     const m = ui.modal, it = S.menu.find(x => x.id === m.id), note = $('#m-note') ? $('#m-note').value.trim() : '';
-    ui.cart.push({ id: it.id, name: it.name, sel: JSON.parse(JSON.stringify(m.sel)), qty: m.qty, note: note, unit: unitOf(it, m.sel) });
+    const l = { id: it.id, name: it.name, sel: JSON.parse(JSON.stringify(m.sel)), qty: m.qty, note: note, unit: unitOf(it, m.sel) };
+    const ex = ui.cart.find(x => x.id === l.id && JSON.stringify(x.sel) === JSON.stringify(l.sel) && x.note === l.note);
+    if (ex) ex.qty += m.qty; else ui.cart.push(l);
     ui.modal = null; toast('已加入 ' + it.name);
   },
-  cartopen: () => { ui.cartOpen = true; }, cartclose: () => { ui.cartOpen = false; },
   cqty: el => { const l = ui.cart[Number(el.dataset.i)]; l.qty += Number(el.dataset.d); if (l.qty <= 0) ui.cart.splice(Number(el.dataset.i), 1); },
   crm: el => { ui.cart.splice(Number(el.dataset.i), 1); }, settype: el => { ui.co.type = el.dataset.v; },
   placeCounter: () => {
     if (!ui.cart.length) return toast('購物車為空');
-    const c = calc();
-    const o = { no: S.nextNo++, type: ui.co.type, table: ui.co.type === 'dine' ? String($('#co-table').value) : '', name: '', phone: '', lines: JSON.parse(JSON.stringify(ui.cart)), sub: c.sub, total: c.total, status: 'making', pay: { s: 'unpaid', m: 'cash' }, t: Date.now(), note: '', src: 'counter', closed: false };
+    const c = calc(); const tType = $('#co-type') ? $('#co-type').value : 'take'; const tTable = $('#co-table') ? $('#co-table').value : '';
+    const o = { no: S.nextNo++, type: tType, table: tType === 'dine' ? String(tTable) : '', name: '', phone: '', lines: JSON.parse(JSON.stringify(ui.cart)), sub: c.sub, total: c.total, status: 'making', pay: { s: 'unpaid', m: 'cash' }, t: Date.now(), note: '', src: 'counter', closed: false };
     S.orders.push(o); if (o.type === 'dine') S.tables[o.table] = 'dining';
     logit('建立訂單 #' + o.no); saveStore(); ui.cart = []; ui.cartOpen = false; ui.cview = 'list'; toast('成功建立訂單 #' + o.no);
   },
   adv: el => { const o = S.orders.find(x => x.no === Number(el.dataset.no)); if (!o) return; const next = { pending: 'making', making: 'ready', ready: 'done' }[o.status]; if (next) { o.status = next; saveStore(); } },
   payopen: el => { const o = S.orders.find(x => x.no === Number(el.dataset.no)); o.pay = { s: 'paid', m: 'cash' }; saveStore(); toast('結帳完成'); },
   ask: el => { const o = S.orders.find(x => x.no === Number(el.dataset.no)); o.status = 'cancelled'; saveStore(); toast('訂單已取消'); },
+  
+  // 桌位操作
   tableInc: () => { S.settings.tables++; saveStore(); }, tableDec: () => { if (S.settings.tables > 1) { S.settings.tables--; saveStore(); } },
   seat: el => { S.tables[el.dataset.t] = 'dining'; saveStore(); }, addto: el => { ui.co.type = 'dine'; ui.co.table = el.dataset.t; ui.co.pay = 'later'; ui.cview = 'new'; ui.tab = 'counter'; },
   leave: el => { const t = el.dataset.t; S.orders.filter(o => o.type === 'dine' && String(o.table) === String(t) && !o.closed).forEach(o => { if (o.pay.s === 'unpaid') o.pay.s = 'paid'; o.closed = true; }); S.tables[t] = 'dirty'; saveStore(); },
   clean: el => { S.tables[el.dataset.t] = 'free'; saveStore(); },
+  
+  // 列印操作
   printopen: el => { ui.modal = { type: 'print', no: Number(el.dataset.no) }; },
-  doprint: () => { window.print(); ui.modal = null; }
+  doprint: el => {
+    const no = Number(el.dataset.no), ptype = el.dataset.ptype, o = S.orders.find(x => x.no === no), pz = $('#print-zone'); 
+    if (!o || !pz) return;
+    const pSize = S.settings.printSize || '80mm'; let dStyle = document.getElementById('dyn-print-style');
+    if (!dStyle) { dStyle = document.createElement('style'); dStyle.id = 'dyn-print-style'; document.head.appendChild(dStyle); }
+    dStyle.innerHTML = `@media print { @page { size: ${pSize} auto; margin: 0; } #print-zone { width: ${pSize} !important; display: block !important; margin: 0; padding: 2mm;} }`;
+    let html = ''; const ts = new Date().toLocaleString('zh-TW', { hour12: false }); const tLabel = TY[o.type] + (o.type === 'dine' && o.table ? ' · ' + o.table + '桌' : '');
+
+    if (ptype === 'num') {
+      html = `<div class="pt-ticket"><div class="pt-title inv">取餐號碼單</div><div class="pt-num">${o.no}</div><div style="text-align:center; font-weight:bold; font-size:16px;">${tLabel}</div><div style="border-top:1px dashed #000; margin:10px 0 5px 0;"></div><div style="text-align:center; font-size:12px;">請留意叫號機或螢幕燈號<br>${ts}</div></div>`;
+    } else if (ptype === 'kit') {
+      let itemsHtml = o.lines.map(l => `<div class="pt-row pt-item"><span>${esc(l.name)}</span><span>x${l.qty}</span></div>${(lineDesc(l) || l.note) ? `<div class="pt-mod">└ [註] ${esc(lineDesc(l))} ${l.note ? '/ ' + esc(l.note) : ''}</div>` : ''}`).join('');
+      html = `<div class="pt-ticket"><div class="pt-title">【廚房工作單】</div><div class="pt-row"><b>單號: #${o.no}</b><span>${tLabel}</span></div><div style="border-top:1px dashed #000; margin:5px 0;"></div>${itemsHtml}<div style="border-top:1px dashed #000; margin:8px 0 5px 0;"></div>${o.note ? `<div class="pt-item" style="margin-top:0;">整單備註: ${esc(o.note)}</div>` : ''}<div style="text-align:center; font-size:12px; margin-top:10px;">${ts}</div></div>`;
+    } else if (ptype === 'cus') {
+      let itemsHtml = o.lines.map(l => `<div class="pt-row"><span>${esc(l.name)} x${l.qty}</span><span>${money(l.unit * l.qty)}</span></div>`).join('');
+      html = `<div class="pt-ticket"><div class="pt-title inv">消費明細</div><div class="pt-row"><b>單號: #${o.no}</b><span>${tLabel}</span></div><div>列印時間: ${ts}</div><div style="border-top:1px dashed #000; margin:5px 0;"></div>${itemsHtml}<div style="border-top:1px dashed #000; margin:5px 0;"></div>${o.disc ? `<div class="pt-row"><span>折扣</span><span>-${money(o.disc)}</span></div>` : ''}<div class="pt-row pt-item" style="margin-top:0;"><span>總計</span><span>${money(o.total)}</span></div><div class="pt-row"><span>付款狀態</span><span>${PAYS[o.pay.s]}</span></div><div style="text-align:center; font-size:12px; margin-top:15px;">*** 謝謝光臨 ***</div></div>`;
+    } else if (ptype === 'stk') {
+      let stickers = []; o.lines.forEach(l => { for(let i=0; i<l.qty; i++) { stickers.push(`<div class="pt-sticker" style="width: 100%;"><div class="pt-stk-head"><span>#${o.no} ${tLabel}</span><span>${i+1}/${l.qty}</span></div><div class="pt-stk-name">${esc(l.name)}</div><div class="pt-stk-mod">${esc(lineDesc(l))}${l.note ? '<br>備註: ' + esc(l.note) : ''}</div></div>`); } });
+      html = stickers.join('');
+    }
+    pz.innerHTML = html; ui.modal = null; render(); setTimeout(() => { window.print(); }, 150);
+  }
 };
 
 document.addEventListener('click', e => {
@@ -525,6 +738,7 @@ document.addEventListener('click', e => {
 });
 
 const val = t => t.type === 'checkbox' ? t.checked : t.value;
+
 document.addEventListener('input', e => { 
   if (e.target.dataset.bind) { 
     const parts = e.target.dataset.bind.split('.'); let root = window;
@@ -536,7 +750,18 @@ document.addEventListener('input', e => {
 document.addEventListener('change', e => { if (e.target.dataset.save !== undefined) saveStore(); });
 
 function render() {
+  const a = document.activeElement, id = a && a.id; 
   const sy = window.scrollY; $('#app').innerHTML = shell(); window.scrollTo(0, sy);
+  
+  if (id) { 
+    const n = document.getElementById(id); 
+    if (n) { 
+      n.focus(); 
+      if(n.tagName === 'INPUT' && n.type !== 'checkbox' && n.type !== 'radio') { 
+        try { n.selectionStart = n.selectionEnd = n.value.length; } catch(e){} 
+      } 
+    } 
+  }
 }
 render();
 </script>
