@@ -1,6 +1,5 @@
 <!DOCTYPE html><html lang="zh-TW"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>商家管理後台</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap">
 <style>
-/* CSS 與前台完全共用，確保視覺一致性 */
 :root{--bg:#f2f3ef;--surface:#ffffff;--soft:#eaece6;--ink:#1d2420;--muted:#626d65;--line:#dadfd6;--accent:#c4332a;--accent-ink:#ffffff;--tint:#fbe7e4;--ok:#1d7648;--ok-t:#dff1e6;--warn:#92610a;--warn-t:#fbefd2;--bad:#b42318;--bad-t:#fde4e1;--info:#2457a6;--info-t:#e1eafa;--h0:#c4332a;--h1:#2f7d52;--h2:#a8700e;--h3:#2f5fa8;--f-body:'Noto Sans TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif;--f-disp:'Noto Serif TC','Songti TC',serif;}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#131713;--surface:#1c211d;--soft:#262c27;--ink:#edf0ea;--muted:#9aa59d;--line:#313832;--accent:#ee6a5f;--accent-ink:#1b0a07;--tint:#3a2220;--ok:#62c791;--ok-t:#1b3326;--warn:#e2b552;--warn-t:#3a2f14;--bad:#f48b81;--bad-t:#3d211e;--info:#8db4f0;--info-t:#1e2c45;--h0:#ee6a5f;--h1:#62c791;--h2:#e2b552;--h3:#8db4f0;color-scheme:dark}}*{box-sizing:border-box}body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 96px;margin:0}.wrap{max-width:1180px;margin:0 auto}button,input,select,textarea{font:inherit;color:inherit}h1,h2,h3,p{margin:0}.muted{color:var(--muted)}.top{display:grid;grid-template-columns:1fr auto;gap:10px 16px;align-items:center;padding:14px 0 0}.brand{display:flex;align-items:center;gap:12px;min-width:0}.mark{display:grid;place-items:center;width:42px;height:42px;border-radius:10px;background:var(--accent);color:var(--accent-ink);font:700 22px var(--f-disp);flex:none}.brand b{font:700 20px var(--f-disp);display:block;line-height:1.2}.brand small{color:var(--muted);font-size:12px}.store-select{font:700 20px var(--f-disp);border:none;background:transparent;color:var(--ink);padding:0;margin:0 0 4px 0;outline:none;cursor:pointer;-webkit-appearance:none;border-bottom:2px dashed var(--muted)}.top-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}.op{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}.op select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 8px;color:var(--ink)}.tabs{grid-column:1/-1;display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);padding-bottom:0}.tab{border:0;background:none;padding:10px 14px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;display:flex;gap:6px;align-items:center}.tab.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:700}.badge{background:var(--accent);color:var(--accent-ink);border-radius:99px;padding:0 7px;font-size:12px;font-weight:700}main{padding-top:18px;display:grid;gap:16px}.pill{display:inline-flex;align-items:center;border-radius:99px;padding:2px 10px;font-size:12px;font-weight:700;background:var(--soft);color:var(--muted);white-space:nowrap}.pill.ok{background:var(--ok-t);color:var(--ok)}.pill.warn{background:var(--warn-t);color:var(--warn)}.pill.bad{background:var(--bad-t);color:var(--bad)}.pill.info{background:var(--info-t);color:var(--info)}.pill.off{background:var(--bad-t);color:var(--bad)}.btn{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 16px;font-weight:500;cursor:pointer;min-height:40px;display:inline-flex;align-items:center;justify-content:center}.btn:hover{background:var(--soft)}.btn.pri{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}.btn.pri:hover{filter:brightness(1.06)}.btn.sm{padding:4px 10px;min-height:32px;font-size:13px;border-radius:8px}.btn.danger{color:var(--bad);border-color:var(--bad)}.btn:disabled{opacity:.45;cursor:not-allowed}:focus-visible{outline:3px solid var(--info);outline-offset:2px}.inp{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 11px;min-height:40px}textarea.inp{min-height:64px;resize:vertical}label.f{display:grid;gap:4px;font-size:13px;color:var(--muted)}.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.row.sp{justify-content:space-between}.grow{flex:1;min-width:0}.order-layout{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:20px;align-items:start}.toolbar{display:grid;gap:10px;margin-bottom:14px}.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 16px;cursor:pointer;white-space:nowrap;font-weight:500;display:inline-flex}.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}.item{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}.item.out{opacity:.55}.mono{width:64px;height:64px;border-radius:12px;display:grid;place-items:center;font:700 26px var(--f-disp);background:color-mix(in srgb,var(--h) 16%,var(--surface));color:var(--h);flex:none}.item-img{width:64px;height:64px;border-radius:12px;background-size:cover;background-position:center;background-color:var(--soft);flex:none}.item h3{font-size:16px}.item p{font-size:13px;color:var(--muted);min-height:1px}.ib{display:flex;gap:8px;align-items:baseline}.ib small{color:var(--muted);font-size:12px}.cart{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;display:grid;gap:14px}.cart-head{display:flex;justify-content:space-between;align-items:center}.cart-head h2{font:700 18px var(--f-disp)}.cline{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding-bottom:10px;border-bottom:1px dashed var(--line)}.cline small{color:var(--muted);grid-column:1/-1}.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden}.qty button{border:0;background:var(--soft);width:34px;height:34px;cursor:pointer;font-size:18px}.qty span{min-width:30px;text-align:center;font-variant-numeric:tabular-nums}.seg{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;overflow:hidden}.seg button{border:0;background:var(--surface);padding:9px 4px;cursor:pointer;font-weight:500}.seg button.on{background:var(--ink);color:var(--bg);font-weight:700}.sum{display:grid;gap:4px;font-variant-numeric:tabular-nums}.sum div{display:flex;justify-content:space-between}.sum .tot{font-size:18px;font-weight:700;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}.hint{font-size:12px;color:var(--muted)}.hint.ok{color:var(--ok)}.hint.bad{color:var(--bad)}.cartbar{display:none}.scrim{display:none}@media (max-width:899px){.order-layout{grid-template-columns:1fr}.cart{position:fixed;left:0;right:0;bottom:0;z-index:30;max-height:88vh;border-radius:18px 18px 0 0;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));transform:translateY(105%);visibility:hidden;transition:transform .2s}.cart.open{transform:none;visibility:visible}.scrim.on{display:block;position:fixed;inset:0;background:#0007;z-index:20}.cartbar{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:space-between;align-items:center;border:0;background:var(--accent);color:var(--accent-ink);padding:14px max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));font-weight:700;cursor:pointer}.cartbar.empty{display:none}}.steps{list-style:none;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0 0;padding:0}.steps li{text-align:center;font-size:13px;padding:6px 2px;border-radius:8px;background:var(--soft);color:var(--muted)}.steps li.done{background:var(--ok-t);color:var(--ok)}.steps li.cur{background:var(--accent);color:var(--accent-ink);font-weight:700}.ocards{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}.oc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px;align-content:start}.oc.late{border-color:var(--bad);box-shadow:0 0 0 1px var(--bad)}.oc .no{font:700 20px var(--f-disp)}.olines{display:grid;gap:2px;font-size:14px}.olines small{color:var(--muted)}.note{background:var(--warn-t);color:var(--warn);border-radius:8px;padding:4px 8px;font-size:13px}.kan{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;align-items:start}.kcol{background:var(--soft);border-radius:14px;padding:10px;display:grid;gap:10px;align-content:start}.kcol h2{font-size:15px;display:flex;justify-content:space-between}.tbls{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}.tbl{background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px;align-content:start}.tbl.dining{border-color:var(--accent)}.tbl.dirty{border-color:var(--warn)}.tbl .n{font:700 26px var(--f-disp)}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:middle}th{font-size:12px;color:var(--muted);font-weight:500}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}.scroll{overflow-x:auto}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}.stat small{color:var(--muted);display:block;font-size:12px}.stat b{font:700 24px var(--f-disp);font-variant-numeric:tabular-nums}.bars{display:flex;gap:8px;align-items:flex-end;height:150px;padding-top:8px}.bar{flex:1;min-width:0;display:grid;grid-template-rows:1fr auto auto;gap:4px;height:100%;text-align:center;font-size:12px;color:var(--muted)}.bar i{align-self:end;background:var(--accent);border-radius:5px 5px 0 0;min-height:3px;display:block}.hb{display:grid;grid-template-columns:7em minmax(0,1fr) 3em;gap:8px;align-items:center;font-size:14px}.hb i{display:block;height:12px;background:var(--h3);border-radius:4px}.subtabs{display:flex;gap:6px;flex-wrap:wrap}.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.modal{position:fixed;inset:0;z-index:50;background:#0008;display:grid;place-items:center;padding:16px}.mp{background:var(--surface);border-radius:16px;padding:18px;width:min(440px,100%);max-height:90vh;overflow:auto;display:grid;gap:14px}.mp h2{font:700 20px var(--f-disp)}.og{display:grid;gap:6px}.og b{font-size:13px}.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;max-width:90vw;font-weight:500;pointer-events:none}.empty-state{padding:28px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.lock{color:var(--muted);font-size:13px}#print-zone{display:none;margin:0 auto;color:#000;font-family:'Courier New',Courier,monospace;font-size:14px;background:white}.pt-ticket{padding-bottom:10px;margin-bottom:10px;border-bottom:1px dashed #000;page-break-after:always}.pt-ticket:last-child{border-bottom:none}.pt-title{text-align:center;font-size:18px;font-weight:bold;margin-bottom:8px;background:#000;color:#fff;padding:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.pt-title.inv{background:none;color:#000;border-bottom:2px solid #000}.pt-num{font-size:40px;font-weight:bold;text-align:center;margin:15px 0;letter-spacing:2px}.pt-row{display:flex;justify-content:space-between;margin:4px 0}.pt-item{font-size:16px;font-weight:bold;margin-top:10px}.pt-mod{font-size:13px;margin-left:12px}.pt-sticker{width:50mm;min-height:40mm;padding:3mm;border:1px dashed #ccc;margin-bottom:10px;page-break-after:always;overflow:hidden;display:flex;flex-direction:column;justify-content:center}.pt-stk-head{font-size:13px;font-weight:bold;border-bottom:1px solid #000;padding-bottom:2px;margin-bottom:4px;display:flex;justify-content:space-between}.pt-stk-name{font-size:18px;font-weight:bold;margin-bottom:4px;line-height:1.2}.pt-stk-mod{font-size:12px;line-height:1.3}@media print{.wrap,.toast,.modal,.scrim,.cartbar{display:none!important}body{background:white;padding:0;margin:0}#print-zone{display:block!important}}
 </style></head><body>
 <script>
@@ -37,7 +36,8 @@ function seed(storeName){
   const menu=[ {id:'m1',cat:'主食',name:'滷肉飯',price:45,desc:'古早味',opts:[],out:false,img:''}, {id:'m10',cat:'飲品',name:'古早味紅茶',price:30,desc:'茶香濃',opts:['size','sugar','ice'],out:false,img:''} ];
   return {
     storeName: storeName || '巷口食堂', groups,menu,orders:[],tables:{},nextNo:102,
-    settings:{open:true,hours:'10:30 – 21:00',maxActive:20,prep:15,deliveryMin:200,deliveryFee:30,deliveryRange:'店面周邊 2 公里內',tables:8,printSize:'80mm'},
+    // ★ 加入預設的店長操作密碼: 8888
+    settings:{open:true,hours:'10:30 – 21:00',maxActive:20,prep:15,deliveryMin:200,deliveryFee:30,deliveryRange:'店面周邊 2 公里內',tables:8,printSize:'80mm', managerPin:'8888'},
     coupons:[{code:'VIP9',desc:'全單 9 折',type:'pct',v:10,min:0,on:true}], members:{'0912345678':{name:'王小姐',points:36}},
     staff:[{name:'店長',role:'admin'},{name:'店員',role:'staff'},{name:'廚房',role:'kitchen'}],
     perms:{staff:{cancel:false,refund:false,price:false,report:false,settings:false},kitchen:{cancel:false,refund:false,price:false,report:false,settings:false}},
@@ -61,11 +61,11 @@ function loadStore(pin){
 }
 
 S = loadStore(currentPin);
-// ★ 後台預設狀態為「強制鎖定」 ★
+// ★ 加入 pendingOp 與 inputMgrPin 變數，用於暫存欲切換的角色與密碼輸入
 const ui={
   locked: true, tab:'counter', cat:'全部',q:'',cart:[],cartOpen:false,cview:'list',
   co:{type:'take',table:'3',name:'',phone:'',addr:'',coupon:'',usePts:false,pay:'cash',note:''},
-  modal:null,last:null,op:0,ofilter:'all',oq:'',atab:'menu',edit:null,
+  modal:null,last:null,op:0, pendingOp:null, inputMgrPin:'', ofilter:'all',oq:'',atab:'menu',edit:null,
   newCoupon:{code:'',desc:'',type:'amt',v:10,min:0}, inputPin:'', newStaff:{name:'',role:'staff'}, newStoreName:'', newStorePin:''
 };
 
@@ -105,16 +105,18 @@ function typeLabel(o){return TY[o.type]+(o.type==='dine'?' · '+o.table+' 號桌
 function shell(){
   if(ui.locked) {
     return '<div style="display:grid;place-items:center;min-height:80vh;"><div class="card" style="text-align:center;width:min(320px,100%)">'+
-      '<h2>🔒 商家與店長登入</h2><p class="muted">請輸入專屬店家密碼</p>'+
-      '<input type="password" class="inp" style="text-align:center;font-size:24px;letter-spacing:4px;margin-bottom:12px;" data-bind="inputPin" value="'+esc(ui.inputPin)+'" placeholder="密碼">'+
-      '<button class="btn pri" style="width:100%" data-act="submitPin">驗證登入</button></div></div>';
+      '<h2>🔒 商家系統登入</h2><p class="muted">請輸入專屬店家驗證碼</p>'+
+      '<input type="password" class="inp" style="text-align:center;font-size:24px;letter-spacing:4px;margin-bottom:12px;" data-bind="inputPin" value="'+esc(ui.inputPin)+'" placeholder="店家密碼">'+
+      '<button class="btn pri" style="width:100%" data-act="submitPin">進入系統</button></div></div>';
   }
   const pend=S.orders.filter(o=>o.status==='pending').length; const r = cur().role; const tabs = [];
   if(r!=='kitchen') tabs.push(['counter','櫃台接單']); tabs.push(['kitchen','出餐看板']); if(r!=='kitchen') tabs.push(['tables','桌位管理']); tabs.push(['admin','後台管理']);
   if(!tabs.find(t=>t[0]===ui.tab)) ui.tab = tabs[0][0]; let body = '';
   if(ui.tab==='counter') body = vCounter(); else if(ui.tab==='kitchen') body = vKitchen(); else if(ui.tab==='tables') body = vTables(); else body = vAdmin();
+  
+  // ★ 將角色切換下拉選單綁定為 requestRoleChange 動作
   return '<header class="top"><div class="brand"><span class="mark">商</span><div><b>'+esc(registry[currentPin])+' · 商家後台</b></div></div>'+
-    '<div class="top-r"><label class="op">角色：<select data-bind="op" data-num>'+S.staff.map((s,i)=>'<option value="'+i+'"'+(i===ui.op?' selected':'')+'>'+esc(s.name)+'（'+ROLE[s.role]+'）</option>').join('')+'</select></label>'+
+    '<div class="top-r"><label class="op">角色：<select data-act="requestRoleChange">'+S.staff.map((s,i)=>'<option value="'+i+'"'+(i===ui.op?' selected':'')+'>'+esc(s.name)+'（'+ROLE[s.role]+'）</option>').join('')+'</select></label>'+
     '<button class="btn sm danger" data-act="lockAdmin">鎖定登出</button></div>'+
     '<nav class="tabs">'+tabs.map(t=>'<button class="tab '+(ui.tab===t[0]?'on':'')+'" data-act="mtab" data-v="'+t[0]+'">'+t[1]+(t[0]==='kitchen'&&pend?'<span class="badge">'+pend+' 新單</span>':'')+'</button>').join('')+'</nav></header>'+
     '<main>'+body+'</main>'+modalHtml();
@@ -253,6 +255,7 @@ function aSettings(){
     '<div class="grid2"><label class="f">營業時間<input id="s-hours" class="inp" data-bind="S.settings.hours" data-save value="'+esc(s.hours)+'"></label>'+
     '<label class="f">列印單據尺寸<select id="s-printSize" class="inp" data-bind="S.settings.printSize" data-save><option value="80mm" '+(s.printSize==='80mm'?'selected':'')+'>80mm (標準熱感應紙)</option><option value="58mm" '+(s.printSize==='58mm'?'selected':'')+'>58mm (小型熱感應紙)</option></select></label></div>'+
     '<label class="row"><input type="checkbox" id="s-open" data-bind="S.settings.open" data-save'+(s.open?' checked':'')+'> 正常營業中（取消勾選將暫停線上點餐）</label>'+
+    '<label class="f">店長操作密碼 (切換角色用)<input id="s-mgrpin" class="inp" data-bind="S.settings.managerPin" data-save value="'+esc(s.managerPin||'8888')+'"></label>'+
     '<label class="f">外送服務範圍<input id="s-range" class="inp" data-bind="S.settings.deliveryRange" data-save value="'+esc(s.deliveryRange)+'"></label>'+
     '<div class="grid2">'+num('maxActive','接單上限數','單')+num('prep','預估製作時間','分鐘')+num('deliveryMin','外送起送最低金額','元')+num('deliveryFee','外送運費','元')+num('tables','內用總桌數','桌')+'</div></div>';
   h += '<div class="card" style="margin-top:14px"><h2 style="font:700 18px var(--f-disp);margin-bottom:8px">連鎖分店與密碼管理</h2>'+
@@ -296,6 +299,12 @@ function aLog(){
 }
 function modalHtml(){
   const m=ui.modal;if(!m)return '';
+  // ★ 加入店長專屬的密碼輸入 Modal ★
+  if(m.type==='managerPin'){
+    return '<div class="modal" data-act="mclose"><div class="mp" data-stop style="text-align:center"><h2>🔒 店長權限驗證</h2><p class="muted">切換至店長角色需輸入操作密碼</p>'+
+      '<input type="password" class="inp" style="text-align:center;font-size:24px;letter-spacing:4px;margin-bottom:12px;" data-bind="inputMgrPin" value="'+esc(ui.inputMgrPin||'')+'" placeholder="輸入店長密碼">'+
+      '<button class="btn pri" style="width:100%" data-act="verifyMgrPin">確認切換</button><button class="btn" style="width:100%;margin-top:8px" data-act="mclose">取消</button></div></div>';
+  }
   if(m.type==='quickGroup'){
     return '<div class="modal" data-act="mclose"><div class="mp" data-stop><h2>新增客製化規格選項</h2><p class="muted">設定後將永久保存，並可無限次綁定至各餐點</p>'+
       '<label class="f">規格名稱<input id="qg-label" class="inp" placeholder="例如：加料、甜度"></label><div class="grid2">'+
@@ -362,6 +371,13 @@ const H={
     else toast('❌ 密碼錯誤');
   },
   lockAdmin:()=>{ ui.locked=true; toast('🔒 已登出後台'); },
+  // ★ 驗證店長密碼 ★
+  verifyMgrPin:()=>{
+    const p = (ui.inputMgrPin||'').trim();
+    if(p === (S.settings.managerPin || '8888')) {
+      ui.op = ui.pendingOp; ui.modal=null; ui.inputMgrPin=''; saveStore(); toast('✅ 已切換為店長權限');
+    } else { toast('❌ 密碼錯誤'); }
+  },
   mtab:el=>{ui.tab=el.dataset.v;}, mclose:el=>{ui.modal=null;},
   cat:el=>{ui.cat=el.dataset.v;},
   add:el=>{
@@ -498,6 +514,23 @@ document.addEventListener('click',e=>{
 });
 function val(t){return t.type==='checkbox'?t.checked:t.dataset.num!==undefined?Number(t.value):t.value;}
 document.addEventListener('input',e=>{ const t=e.target;if(!t.dataset||!t.dataset.bind)return; setPath(t.dataset.bind,val(t)); });
+
+// ★ 攔截角色切換的下拉選單變更事件 ★
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.act === 'requestRoleChange') {
+    const newOp = Number(t.value);
+    // 如果選擇的是店長(admin)，彈出密碼輸入框
+    if(S.staff[newOp].role === 'admin') {
+      ui.pendingOp = newOp; ui.inputMgrPin = ''; ui.modal = {type: 'managerPin'};
+    } else {
+      ui.op = newOp; saveStore();
+    }
+    render(); return;
+  }
+  if(!t.dataset||!t.dataset.bind)return; setPath(t.dataset.bind,val(t)); if(t.dataset.save !== undefined) saveStore();
+});
+
 function render(){
   const a=document.activeElement,id=a&&a.id; const sy=window.scrollY;
   $('#app').innerHTML=shell();
