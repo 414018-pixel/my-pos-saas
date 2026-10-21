@@ -1,280 +1,74 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>線上點餐系統</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700&display=swap">
-<style>
-:root{--bg:#f5f6f8;--surface:#ffffff;--soft:#eaece6;--ink:#1d2420;--muted:#626d65;--line:#dadfd6;--accent:#c4332a;--accent-ink:#ffffff;--brand-orange:#f39c12;--f-body:'Noto Sans TC',sans-serif;--f-disp:'Noto Serif TC',serif;}
-*{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;margin:0;padding-bottom:120px;}
-button,input,select,textarea{font:inherit;color:inherit}
-h1,h2,h3,p{margin:0}
-.muted{color:var(--muted)}
-.cus-wrap { max-width: 480px; margin: 0 auto; background: var(--surface); min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.05); position: relative; }
-.cus-head { padding: 20px; border-bottom: 1px solid var(--line); }
-.cus-head h1 { font: 700 24px var(--f-disp); margin-bottom: 16px; }
-.cus-info { display: grid; gap: 12px; font-size: 14px; margin-bottom: 20px; }
-.cus-info div { display: flex; justify-content: space-between; align-items: center; }
-.cus-info a { color: var(--brand-orange); text-decoration: none; font-weight: 500; }
-.cus-box { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
-.cus-box-title { background: #fafafa; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); }
-.cus-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
-.cus-grid2 > div { padding: 14px; border-right: 1px solid var(--line); }
-.cus-grid2 > div:last-child { border-right: none; }
-.menu-grid{display:grid;grid-template-columns: 1fr;gap:12px; padding:20px;}
-.item{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
-.item.out{opacity:.55}
-.mono{width:64px;height:64px;border-radius:12px;display:grid;place-items:center;font-weight:bold;font-size:26px;background:var(--soft);color:var(--ink);flex:none}
-.item-img{width:64px;height:64px;border-radius:12px;background-size:cover;background-position:center;background-color:var(--soft);flex:none}
-.ib{display:flex;gap:8px;align-items:baseline}
-.btn{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 16px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;}
-.btn.pri{background:var(--brand-orange);border-color:var(--brand-orange);color:#fff;font-weight:700}
-.btn.sm{padding:4px 10px;min-height:32px;font-size:13px;border-radius:8px}
-.cartbar{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:10;display:flex;justify-content:space-between;align-items:center;border:0;background:var(--brand-orange);color:#fff;padding:14px 20px;border-radius:99px;font-weight:700;cursor:pointer;width:calc(100% - 32px);max-width:440px; box-shadow:0 4px 12px rgba(243,156,18,0.3);}
-.cartbar.empty{display:none}
-.cart{position:fixed;left:50%;transform:translate(-50%, 105%);bottom:0;width:100%;max-width:480px;z-index:30;max-height:88vh;background:var(--surface);border-radius:18px 18px 0 0;padding:20px;overflow:auto;visibility:hidden;transition:transform .3s ease-in-out;}
-.cart.open{transform:translate(-50%, 0);visibility:visible}
-.scrim{display:none;position:fixed;inset:0;background:#0007;z-index:20}
-.scrim.on{display:block;}
-.cline{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding-bottom:10px;border-bottom:1px dashed var(--line); margin-bottom:10px;}
-.qty{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:9px;overflow:hidden}
-.qty button{border:0;background:var(--soft);width:34px;height:34px;cursor:pointer;font-size:18px}
-.qty span{min-width:30px;text-align:center;}
-.inp{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 11px;min-height:40px; margin-bottom:10px;}
-.sum{display:grid;gap:4px;font-variant-numeric:tabular-nums; margin-bottom:16px;}
-.sum div{display:flex;justify-content:space-between}
-.sum .tot{font-size:18px;font-weight:700;border-top:1px solid var(--line);padding-top:8px;margin-top:4px}
-.modal{position:fixed;inset:0;z-index:50;background:#0008;display:grid;place-items:center;padding:16px}
-.mp{background:var(--surface);border-radius:16px;padding:18px;width:min(440px,100%);max-height:90vh;overflow:auto;}
-.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;flex-wrap:wrap}
-.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 16px;cursor:pointer;white-space:nowrap;font-weight:500;}
-.chip.on{background:var(--brand-orange);color:#fff;border-color:var(--brand-orange)}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:100px;z-index:60;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:500;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>巷口食堂 - 會員登入</title>
+    <style>
+        body { font-family: sans-serif; background-color: #f8f9fa; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
+        .login-card h2 { margin-top: 0; color: #333; }
+        .line-btn { background-color: #06C755; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 20px; display: flex; justify-content: center; align-items: center; }
+        .divider { display: flex; align-items: center; text-align: center; color: #888; margin-bottom: 20px; }
+        .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid #eee; }
+        .divider:not(:empty)::before { margin-right: .25em; }
+        .divider:not(:empty)::after { margin-left: .25em; }
+        .form-group { text-align: left; margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 14px; color: #666; margin-bottom: 5px; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .submit-btn { background-color: #F5A623; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .help-text { margin-top: 20px; font-size: 13px; color: #888; }
+    </style>
 </head>
 <body>
 
-<div id="app"></div>
-<div id="toast" class="toast" hidden></div>
+<div class="login-card">
+    <h2>會員登入</h2>
+    
+    <!-- LINE 登入按鈕 -->
+    <button class="line-btn" onclick="loginWithLine()">
+        使用 LINE 快速登入
+    </button>
+
+    <div class="divider">或使用帳號密碼</div>
+
+    <!-- 帳號密碼登入表單 -->
+    <div class="form-group">
+        <label for="phone">手機號碼 (帳號)</label>
+        <input type="tel" id="phone" placeholder="請輸入手機號碼">
+    </div>
+    <div class="form-group">
+        <label for="password">密碼</label>
+        <input type="password" id="password" placeholder="請輸入密碼">
+    </div>
+    <button class="submit-btn" onclick="loginWithPassword()">登入</button>
+
+    <!-- 店員協助註冊提示 -->
+    <div class="help-text">
+        尚未註冊或忘記密碼？<br>請洽店內人員協助為您處理。
+    </div>
+</div>
 
 <script>
-const LS_REGISTRY = 'pos-registry';
-const LS_CURRENT = 'pos-current-pin';
-const $ = s => document.querySelector(s);
-const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const money = n => '$' + Math.round(n).toLocaleString('en-US');
-
-// 從 localStorage 讀取店家資料 (與後台共用資料庫)
-let registry = {}; try { registry = JSON.parse(localStorage.getItem(LS_REGISTRY)) || {}; } catch(e) {}
-let currentPin = localStorage.getItem(LS_CURRENT) || Object.keys(registry)[0];
-let S = null;
-
-function loadStore(pin) {
-  try {
-    const r = localStorage.getItem('pos-data-' + pin);
-    if (r) return JSON.parse(r);
-  } catch(e) {} 
-  return null;
-}
-
-S = loadStore(currentPin);
-
-const ui = {
-  cart: [], cartOpen: false, modal: null, cusLoginPhone: '',
-  co: { type: 'take', name: '', phone: '', addr: '', coupon: '', pay: 'cash', note: '' }
-};
-
-function saveStore() {
-  localStorage.setItem('pos-data-' + currentPin, JSON.stringify(S));
-}
-
-let toastT = null;
-function toast(msg) {
-  const t = $('#toast'); t.textContent = msg; t.hidden = false;
-  clearTimeout(toastT); toastT = setTimeout(() => { t.hidden = true; }, 2600);
-}
-
-function unitOf(item, sel) {
-  let p = item.price; const gDict = S.groups || {};
-  Object.keys(sel || {}).forEach(g => { if (gDict[g]) { (sel[g] || []).forEach(n => { const c = gDict[g].ch.find(x => x[0] === n); if (c) p += c[1]; }); } }); 
-  return p;
-}
-
-function lineDesc(l) { const a = []; Object.keys(l.sel || {}).forEach(g => { (l.sel[g] || []).forEach(n => a.push(n)); }); return a.join('・'); }
-
-function calc() {
-  const sub = ui.cart.reduce((a, l) => a + l.unit * l.qty, 0); 
-  return { sub, total: sub }; // 簡化前台結帳邏輯
-}
-
-function shell() {
-  if(!S) return `<div style="text-align:center; padding:50px;">找不到商店資料，請先至後台完成設定。</div>`;
-
-  const s = S.settings;
-  const d = new Date(); const dStr = `${d.getMonth()+1}月 ${d.getDate()} 週${['日','一','二','三','四','五','六'][d.getDay()]}`;
-  const c = calc(); const n = ui.cart.reduce((a, l) => a + l.qty, 0);
-
-  let memberHtml = '';
-  if (ui.cusLoginPhone && S.members && S.members[ui.cusLoginPhone]) {
-    const mem = S.members[ui.cusLoginPhone];
-    memberHtml = `<div style="background:#e8f5e9; color:#2e7d32; padding:12px; border-radius:8px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
-      <div><b>👋 ${esc(mem.name)}</b> 您好！<br>累積點數：<b>${mem.points}</b> 點</div>
-      <button class="btn sm" data-act="doCusLogout" style="background:#fff;">登出</button>
-    </div>`;
-  } else {
-    memberHtml = `<div style="background:#fff3cd; color:#856404; padding:12px; border-radius:8px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
-      <div><b>專屬優惠與集點</b><br><small>尚未註冊？請洽店內人員</small></div>
-      <button class="btn sm" data-act="openCusLogin" style="background:#ffc107; color:#000; border:none;">會員登入</button>
-    </div>`;
-  }
-
-  const lines = ui.cart.map((l, i) => `<div class="cline"><b>${esc(l.name)}</b><span style="text-align:right;">${money(l.unit * l.qty)}</span>
-    ${lineDesc(l) || l.note ? `<small style="grid-column:1/-1; color:var(--muted);">${esc(lineDesc(l))}${l.note ? ' ／ 備註：' + esc(l.note) : ''}</small>` : ''}
-    <div class="qty" style="grid-column:1/-1; margin-top:8px;"><button data-act="cqty" data-i="${i}" data-d="-1">−</button><span>${l.qty}</span><button data-act="cqty" data-i="${i}" data-d="1">+</button>
-    <button class="btn sm" data-act="crm" data-i="${i}" style="margin-left:auto;">移除</button></div></div>`).join('');
-
-  return `<div class="cus-wrap">
-    <div class="cus-head">
-      <h1>${esc(S.storeName)}</h1>
-      ${memberHtml}
-      <div class="cus-info">
-        <div><span>📍 ${esc(s.address)}</span><a href="#">導航</a></div>
-        <div><span>📞 ${esc(s.phone)}</span><a href="#">通話</a></div>
-        <div><span>🕒 營業時間</span><span style="color:var(--ok); font-weight:bold;">${s.open?'營業中':'休息中'}</span></div>
-      </div>
-      <div class="cus-box">
-        <div class="cus-box-title">預訂取餐</div>
-        <div class="cus-grid2">
-          <div><small class="muted">日期</small><br><b>${dStr}</b></div>
-          <div><small class="muted">時間</small><br><b>下午 4:30</b></div>
-        </div>
-      </div>
-      <div>
-        <h3 style="font-size: 16px; margin-bottom: 8px;">訂餐須知</h3>
-        <div style="white-space: pre-wrap; font-size: 14px; line-height: 1.6;">${esc(s.onlinePromo)}</div>
-      </div>
-    </div>
-    
-    <div class="menu-grid">
-      <h3 style="margin-bottom:4px;">線上菜單</h3>
-      ${S.menu.filter(m => !m.out).map(m => `<article class="item">
-        ${m.img?`<div class="item-img" style="background-image:url('${m.img}')"></div>`:`<div class="mono">${esc(m.name[0])}</div>`}
-        <div><h3 style="font-size:16px;">${esc(m.name)}</h3><p style="font-size:13px;color:var(--muted);">${esc(m.desc)}</p><div class="ib"><b>${money(m.price)}</b></div></div>
-        <button class="btn pri" data-act="add" data-id="${m.id}">${m.opts.length ? '選擇' : '加入'}</button>
-      </article>`).join('')}
-    </div>
-
-    <!-- 購物車面板 -->
-    <div class="scrim ${ui.cartOpen ? 'on' : ''}" data-act="cartclose"></div>
-    <aside class="cart ${ui.cartOpen ? 'open' : ''}">
-      <div class="cart-head" style="margin-bottom:16px;"><h2>🛒 您的購物車</h2><button class="btn sm" data-act="cartclose">關閉</button></div>
-      ${ui.cart.length ? lines : '<div style="text-align:center; padding:20px; color:var(--muted);">購物車目前為空</div>'}
-      ${ui.cart.length ? `
-      <div style="margin-top:16px; border-top:1px solid var(--line); padding-top:16px;">
-        <label style="display:block; font-size:13px; color:var(--muted); margin-bottom:4px;">取餐姓名</label><input class="inp" id="cus-name" value="${esc(ui.co.name)}">
-        <label style="display:block; font-size:13px; color:var(--muted); margin-bottom:4px;">連絡電話</label><input class="inp" id="cus-phone" value="${esc(ui.cusLoginPhone || ui.co.phone)}">
-        <label style="display:block; font-size:13px; color:var(--muted); margin-bottom:4px;">訂單備註</label><textarea class="inp" id="cus-note" style="min-height:60px;"></textarea>
-        <div class="sum"><div><span>合計總金額</span><span class="tot">${money(c.total)}</span></div></div>
-        <button class="btn pri" style="width:100%; min-height:50px; font-size:16px;" data-act="placeOrder">送出訂單</button>
-      </div>` : ''}
-    </aside>
-
-    <button class="cartbar ${n ? '' : 'empty'}" data-act="cartopen"><span>查看購物車 · ${n} 項</span><span>${money(c.total)}</span></button>
-  </div>${modalHtml()}`;
-}
-
-function modalHtml() {
-  if (!ui.modal) return '';
-  if (ui.modal.type === 'cusLogin') {
-    return `<div class="modal" data-act="mclose"><div class="mp" data-stop style="text-align:center"><h2>👤 會員登入</h2>
-      <p class="muted" style="margin-bottom:14px;">請輸入您的手機號碼。<br><small>(測試帳號請輸入 0912345678)</small></p>
-      <input type="tel" class="inp" style="text-align:center;font-size:20px;letter-spacing:2px;margin-bottom:12px;" id="login-phone" value="">
-      <button class="btn pri" style="width:100%" data-act="doCusLogin">登入</button></div></div>`;
-  }
-  if (ui.modal.type === 'item') {
-    const it = S.menu.find(x => x.id === ui.modal.id); const sel = ui.modal.sel; const price = unitOf(it, sel) * ui.modal.qty;
-    return `<div class="modal" data-act="mclose"><div class="mp" data-stop><div style="display:flex; gap:12px; margin-bottom:16px;">${it.img ? `<img src="${it.img}" style="width:64px;height:64px;border-radius:12px;object-fit:cover;">` : ''}
-      <div><h2 style="font-size:18px;">${esc(it.name)}</h2><p class="muted" style="font-size:14px;">${esc(it.desc)}</p></div></div>
-      ${it.opts.map(g => { const G = S.groups[g]; if (!G) return ''; return `<div style="margin-bottom:12px;"><b style="display:block;font-size:14px;margin-bottom:6px;">${esc(G.label)}${G.req ? ' (必填)' : ' (可多選)'}</b><div class="chips">${G.ch.map(c => `<button class="chip ${(sel[g] || []).includes(c[0]) ? 'on' : ''}" data-act="optpick" data-g="${g}" data-c="${esc(c[0])}">${esc(c[0])}${c[1] ? ' +' + money(c[1]) : ''}</button>`).join('')}</div></div>`; }).join('')}
-      <label style="display:block; font-size:14px; margin-bottom:4px; font-weight:bold;">備註</label><input id="m-note" class="inp" value="${esc(ui.modal.note)}" placeholder="例如：不要蔥">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;"><div class="qty"><button data-act="mqty" data-d="-1">−</button><span>${ui.modal.qty}</span><button data-act="mqty" data-d="1">+</button></div>
-      <button class="btn pri" data-act="madd">加入 ${money(price)}</button></div></div></div>`;
-  }
-  return '';
-}
-
-const H = {
-  openCusLogin: () => { ui.modal = { type: 'cusLogin' }; },
-  doCusLogin: () => {
-    const p = ($('#login-phone')?$('#login-phone').value:'').trim();
-    if(!p) return toast('請輸入手機號碼');
-    if(S.members && S.members[p]) { ui.cusLoginPhone = p; ui.modal = null; toast('登入成功'); } 
-    else { toast('找不到此會員，請洽詢店內人員'); }
-  },
-  doCusLogout: () => { ui.cusLoginPhone = ''; toast('已登出'); },
-  mclose: () => { ui.modal = null; },
-  cartopen: () => { ui.cartOpen = true; }, cartclose: () => { ui.cartOpen = false; },
-  add: el => {
-    const it = S.menu.find(m => m.id === el.dataset.id); if (!it || it.out) return;
-    if (!it.opts.length) { 
-      const l = { id: it.id, name: it.name, sel: {}, qty: 1, note: '', unit: it.price }; 
-      const ex = ui.cart.find(x => x.id === l.id && x.note === l.note);
-      if (ex) ex.qty += 1; else ui.cart.push(l);
-      toast('已加入 ' + it.name); return; 
+    function loginWithLine() {
+        // 這裡需要串接 LINE Login API 的授權網址 (如 LIFF 或 LINE OAuth2)
+        alert('導向 LINE 授權登入頁面...');
+        // window.location.href = 'YOUR_LINE_LOGIN_AUTH_URL';
     }
-    const sel = {}; it.opts.forEach(g => { const G = S.groups[g]; if (G && G.req && G.ch.length) sel[g] = [G.ch[0][0]]; });
-    ui.modal = { type: 'item', id: it.id, sel, qty: 1, note: '' };
-  },
-  optpick: el => {
-    const m = ui.modal, g = el.dataset.g, c = el.dataset.c, G = S.groups[g];
-    if (G.multi) { const a = m.sel[g] || []; m.sel[g] = a.includes(c) ? a.filter(x => x !== c) : a.concat(c); } else m.sel[g] = [c];
-  },
-  mqty: el => { ui.modal.qty = Math.max(1, ui.modal.qty + Number(el.dataset.d)); },
-  madd: () => {
-    const m = ui.modal, it = S.menu.find(x => x.id === m.id);
-    const note = $('#m-note') ? $('#m-note').value.trim() : '';
-    const l = { id: it.id, name: it.name, sel: JSON.parse(JSON.stringify(m.sel)), qty: m.qty, note: note, unit: unitOf(it, m.sel) };
-    const ex = ui.cart.find(x => x.id === l.id && JSON.stringify(x.sel) === JSON.stringify(l.sel) && x.note === l.note);
-    if (ex) ex.qty += m.qty; else ui.cart.push(l);
-    ui.modal = null; toast('已加入 ' + it.name);
-  },
-  cqty: el => { const l = ui.cart[Number(el.dataset.i)]; l.qty += Number(el.dataset.d); if (l.qty <= 0) ui.cart.splice(Number(el.dataset.i), 1); },
-  crm: el => { ui.cart.splice(Number(el.dataset.i), 1); },
-  placeOrder: () => {
-    const name = $('#cus-name') ? $('#cus-name').value.trim() : '';
-    const phone = $('#cus-phone') ? $('#cus-phone').value.trim() : '';
-    const note = $('#cus-note') ? $('#cus-note').value.trim() : '';
-    if(!name || !phone) return toast('請填寫取餐姓名與電話');
 
-    const c = calc();
-    const o = { 
-      no: S.nextNo++, type: 'take', table: '', name: name, phone: phone, addr: '', 
-      lines: JSON.parse(JSON.stringify(ui.cart)), sub: c.sub, disc: 0, pts: 0, fee: 0, total: c.total, 
-      status: 'pending', pay: { s: 'unpaid', m: 'cash' }, t: Date.now(), note: note, src: 'online', closed: false 
-    };
-    S.orders.push(o); saveStore(); 
-    ui.cart = []; ui.cartOpen = false; ui.co.name = name; ui.co.phone = phone; // 記憶填過的資料
-    toast('✅ 訂單已送出，單號 #' + o.no);
-    setTimeout(() => { alert('您的訂單已傳送至店家後台！單號：#' + o.no); }, 300);
-  }
-};
-
-document.addEventListener('click', e => {
-  const el = e.target.closest('[data-act]'); if (!el) return;
-  if (el.classList.contains('modal') && e.target.closest('[data-stop]')) return;
-  if (H[el.dataset.act]) { H[el.dataset.act](el); render(); }
-});
-
-function render() {
-  const a = document.activeElement, id = a && a.id, sy = window.scrollY;
-  $('#app').innerHTML = shell();
-  if (id) { const n = document.getElementById(id); if (n) { n.focus(); if(n.tagName==='INPUT'){ n.selectionStart = n.selectionEnd = n.value.length; } } }
-  window.scrollTo(0, sy);
-}
-
-render();
+    function loginWithPassword() {
+        const phone = document.getElementById('phone').value;
+        const password = document.getElementById('password').value;
+        
+        if (!phone || !password) {
+            alert('請輸入手機號碼與密碼！');
+            return;
+        }
+        
+        // 這裡串接您的 my-pos-saas 後端登入 API
+        alert('發送登入請求：' + phone);
+    }
 </script>
+
 </body>
 </html>
