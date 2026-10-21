@@ -159,7 +159,7 @@ function seed(storeName) {
     },
     coupons: [{ code: 'C50', desc: '滿額折50', type: 'amt', v: 50, min: 500, on: true }], 
     members: { '0912345678': { name: '王小姐', points: 36 } },
-    staff: [{ name: '店長', role: 'admin' }, { name: '一般店員', role: 'staff' }, { name: '廚房', role: 'kitchen' }],
+    staff: [{ name: '店長', role: 'admin' }, { name: '一般店員', role: 'staff' }],
     perms: { staff: { cancel: false, refund: false, price: false, report: false, settings: false } },
     log: []
   };
@@ -187,13 +187,13 @@ const ui = {
   locked: true, tab: 'counter', cat: '全部', q: '', cart: [], cartOpen: false, cview: 'list',
   co: { type: 'take', table: '3', name: '', phone: '', addr: '', coupon: '', usePts: false, pay: 'cash', note: '' },
   modal: null, op: 0, pendingOp: null, inputMgrPin: '', ofilter: 'all', oq: '', atab: 'store', edit: null,
-  newCoupon: { code: '', desc: '', type: 'amt', v: 10, min: 0 }, inputPin: '', newStaff: { name: '', role: 'staff' }, newStoreName: '', newStorePin: ''
+  newCoupon: { code: '', desc: '', type: 'amt', v: 10, min: 0 }, inputPin: '', newStaff: { name: '', role: 'staff' }, newStoreName: '', newStorePin: '',
+  cusLoginPhone: '' // 前台顧客登入用狀態
 };
 
 const cur = () => S.staff[ui.op] || S.staff[0];
 const can = p => cur().role === 'admin' || !!(S.perms[cur().role] && S.perms[cur().role][p]);
 const hm = t => new Date(t).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
-const mins = t => Math.max(0, Math.floor((Date.now() - t) / 60000));
 
 function logit(msg) { S.log.unshift({ t: Date.now(), who: cur().name, msg }); S.log = S.log.slice(0, 80); }
 
@@ -210,56 +210,6 @@ function saveStore() {
     localStorage.setItem(LS_CURRENT, currentPin); 
   } catch(e) { toast('儲存失敗！'); }
 }
-
-/* ================= 核心計算與邏輯 ================= */
-
-function unitOf(item, sel, gDictOverride) {
-  let p = item.price; 
-  const gDict = gDictOverride || (S && S.groups ? S.groups : {});
-  Object.keys(sel || {}).forEach(g => { 
-    if (gDict[g]) { 
-      (sel[g] || []).forEach(n => {
-        const c = gDict[g].ch.find(x => x[0] === n);
-        if (c) p += c[1];
-      }); 
-    } 
-  }); 
-  return p;
-}
-
-function mkLine(menu, id, sel, qty, note, gDictOverride) {
-  const it = menu.find(m => m.id === id); 
-  return { id, name: it.name, sel: sel || {}, qty: qty || 1, note: note || '', unit: unitOf(it, sel || {}, gDictOverride) };
-}
-
-function calc(cart, co) {
-  const sub = cart.reduce((a, l) => a + l.unit * l.qty, 0); 
-  let disc = 0, cmsg = '', cok = false; 
-  const code = (co.coupon || '').trim().toUpperCase();
-  if (code) {
-    const c = S.coupons.find(x => x.code === code && x.on);
-    if (!c) cmsg = '找不到優惠碼'; 
-    else if (sub < c.min) cmsg = '需滿 ' + money(c.min); 
-    else { 
-      disc = c.type === 'pct' ? Math.round(sub * c.v / 100) : Math.min(c.v, sub); 
-      cmsg = '已套用：' + c.desc; 
-      cok = true; 
-    }
-  }
-  const mem = S.members[(co.phone || '').trim()]; 
-  let pts = 0;
-  if (co.usePts && mem) pts = Math.min(mem.points, Math.max(0, sub - disc));
-  const fee = co.type === 'deliv' && sub > 0 ? S.settings.deliveryFee : 0; 
-  return { sub, disc, cmsg, cok, mem, pts, fee, total: sub - disc - pts + fee, code };
-}
-
-function lineDesc(l) {
-  const a = []; Object.keys(l.sel || {}).forEach(g => { (l.sel[g] || []).forEach(n => a.push(n)); }); return a.join('・');
-}
-function catIdx(cat) { const cs = [...new Set(S.menu.map(m => m.cat))]; return Math.max(0, cs.indexOf(cat)) % 4; }
-function syncTables() { const n = S.settings.tables; for (let i = 1; i <= n; i++) if (!S.tables[i]) S.tables[i] = 'free'; }
-
-/* ================= UI 渲染核心 ================= */
 
 function shell() {
   if (ui.locked) {
@@ -289,7 +239,30 @@ function shell() {
     <main>${body}</main></div>${modalHtml()}`;
 }
 
-/* ================= 1. 櫃台接單模組 (已修復還原) ================= */
+/* ================= 核心邏輯 ================= */
+
+function unitOf(item, sel, gDictOverride) {
+  let p = item.price; const gDict = gDictOverride || (S && S.groups ? S.groups : {});
+  Object.keys(sel || {}).forEach(g => { if (gDict[g]) { (sel[g] || []).forEach(n => { const c = gDict[g].ch.find(x => x[0] === n); if (c) p += c[1]; }); } }); return p;
+}
+function mkLine(menu, id, sel, qty, note, gDictOverride) {
+  const it = menu.find(m => m.id === id); return { id, name: it.name, sel: sel || {}, qty: qty || 1, note: note || '', unit: unitOf(it, sel || {}, gDictOverride) };
+}
+function calc(cart, co) {
+  const sub = cart.reduce((a, l) => a + l.unit * l.qty, 0); let disc = 0, cmsg = '', cok = false; const code = (co.coupon || '').trim().toUpperCase();
+  if (code) {
+    const c = S.coupons.find(x => x.code === code && x.on);
+    if (!c) cmsg = '找不到優惠碼'; else if (sub < c.min) cmsg = '需滿 ' + money(c.min); else { disc = c.type === 'pct' ? Math.round(sub * c.v / 100) : Math.min(c.v, sub); cmsg = '已套用：' + c.desc; cok = true; }
+  }
+  const mem = S.members[(co.phone || '').trim()]; let pts = 0;
+  if (co.usePts && mem) pts = Math.min(mem.points, Math.max(0, sub - disc));
+  const fee = co.type === 'deliv' && sub > 0 ? S.settings.deliveryFee : 0; return { sub, disc, cmsg, cok, mem, pts, fee, total: sub - disc - pts + fee, code };
+}
+function lineDesc(l) { const a = []; Object.keys(l.sel || {}).forEach(g => { (l.sel[g] || []).forEach(n => a.push(n)); }); return a.join('・'); }
+function catIdx(cat) { const cs = [...new Set(S.menu.map(m => m.cat))]; return Math.max(0, cs.indexOf(cat)) % 4; }
+function syncTables() { const n = S.settings.tables; for (let i = 1; i <= n; i++) if (!S.tables[i]) S.tables[i] = 'free'; }
+
+/* ================= 1. 櫃台接單 ================= */
 
 function vCounter() {
   if (ui.cview === 'new') return ordering();
@@ -309,8 +282,7 @@ function vCounter() {
 }
 
 function ordering() {
-  const cats = ['全部'].concat([...new Set(S.menu.map(m => m.cat))]); 
-  const q = ui.q.trim();
+  const cats = ['全部'].concat([...new Set(S.menu.map(m => m.cat))]); const q = ui.q.trim();
   const items = S.menu.filter(m => (ui.cat === '全部' || m.cat === ui.cat) && (!q || m.name.includes(q) || m.desc.includes(q)));
   const n = ui.cart.reduce((a, l) => a + l.qty, 0), c = calc(ui.cart, ui.co);
   return `<div class="order-layout"><section><div class="toolbar"><input id="q" class="inp" type="search" placeholder="搜尋菜單品項..." value="${esc(ui.q)}" data-bind="q" data-live>
@@ -368,13 +340,12 @@ function orderCard(o) {
     ${open && o.pay.s === 'unpaid' ? `<button class="btn sm danger" data-act="ask" data-kind="cancel" data-no="${o.no}"${dis('cancel')}>取消</button>` : ''}</div></article>`;
 }
 
-/* ================= 2. 出餐看板與桌位管理模組 (已修復還原) ================= */
+/* ================= 2. 出餐看板與桌位管理 ================= */
 
 function vKitchen() {
   const by = s => S.orders.filter(o => o.status === s).sort((a, b) => a.t - b.t);
   const cols = [['pending', '待確認新單'], ['making', '製作中'], ['ready', '待出餐／取餐']]; 
   const done = S.orders.filter(o => o.status === 'done').sort((a, b) => b.t - a.t).slice(0, 4);
-  
   const kCard = o => {
     const late = ['pending', 'making'].includes(o.status) && mins(o.t) > S.settings.prep;
     const typeLabel = TY[o.type] + (o.type === 'dine' ? ' · ' + o.table + ' 號桌' : o.name ? ' · ' + esc(o.name) : '');
@@ -383,7 +354,6 @@ function vKitchen() {
     return `<article class="oc ${late ? 'late' : ''}"><div class="row sp"><span class="no">#${o.no}</span><span class="pill ${late ? 'bad' : ''}">${mins(o.t)} 分鐘${late ? ' · 已逾時' : ''}</span></div>
       <div><b>${typeLabel}</b></div>${linesHtml}${o.status !== 'done' ? `<button class="btn pri" style="min-height:44px;width:100%" data-act="adv" data-no="${o.no}">${advLabel}</button>` : ''}</article>`;
   };
-
   return `<div class="kan">${cols.map(c => { const l = by(c[0]); return `<section class="kcol"><h2><span>${c[1]}</span><span class="pill">${l.length}</span></h2>${l.map(kCard).join('') || '<p class="hint">無</p>'}</section>`; }).join('')}
     <section class="kcol"><h2><span>最近完成</span><span class="pill">${done.length}</span></h2>${done.map(kCard).join('') || '<p class="hint">無</p>'}</section></div>`;
 }
@@ -404,7 +374,7 @@ function vTables() {
   return h + `</div>`;
 }
 
-/* ================= 3. 後台管理模組 (包含擴充功能) ================= */
+/* ================= 3. 後台管理與前台線上點餐 ================= */
 
 function vSysAdmin() {
   return `<div class="card" style="margin-top:20px"><h2>👑 系統管理員 - 商店總覽</h2>
@@ -546,14 +516,31 @@ function aOrderSet() {
   </div>`;
 }
 
+// ★ 顧客前台頁面 (結合登入與會員點數) ★
 function vCustomer() {
   const s = S.settings;
   const d = new Date(); const dStr = `${d.getMonth()+1}月 ${d.getDate()} 週${['日','一','二','三','四','五','六'][d.getDay()]}`;
+
+  let memberHtml = '';
+  if (ui.cusLoginPhone && S.members[ui.cusLoginPhone]) {
+    const mem = S.members[ui.cusLoginPhone];
+    memberHtml = `<div style="background:var(--ok-t); color:var(--ok); padding:12px; border-radius:8px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+      <div><b>👋 ${esc(mem.name)}</b> 您好！目前累積點數：<b>${mem.points}</b> 點</div>
+      <button class="btn sm" data-act="doCusLogout" style="background:#fff; color:var(--ink);">登出</button>
+    </div>`;
+  } else {
+    memberHtml = `<div style="background:#fff3cd; color:#856404; padding:12px; border-radius:8px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+      <div><b>累積點數與專屬優惠</b><br><small>尚未註冊？由店內人員幫您設定</small></div>
+      <button class="btn sm" data-act="openCusLogin" style="background:#ffc107; color:#000; border:none;">會員登入</button>
+    </div>`;
+  }
+
   return `<div style="background: #f5f6f8; min-height: 100vh; padding-top: 20px;">
     <div class="cus-wrap">
       <div class="cus-head">
         <button class="btn sm" data-act="exitCustomerView" style="margin-bottom: 16px;">← 返回店家後台</button>
         <h1>${esc(S.storeName)}</h1>
+        ${memberHtml}
         <div class="cus-info">
           <div><span>📍 ${esc(s.address)}</span><a href="#">導航</a></div>
           <div><span>📞 ${esc(s.phone)}</span><a href="#">通話</a></div>
@@ -650,6 +637,13 @@ function modalHtml() {
       <input type="password" class="inp" style="text-align:center;font-size:24px;letter-spacing:4px;margin-bottom:12px;" data-bind="inputMgrPin" value="${esc(ui.inputMgrPin)}" placeholder="輸入店長密碼">
       <button class="btn pri" style="width:100%" data-act="verifyMgrPin">確認</button></div></div>`;
   }
+  // ★ 顧客會員登入 Modal ★
+  if (ui.modal.type === 'cusLogin') {
+    return `<div class="modal" data-act="mclose"><div class="mp" data-stop style="text-align:center"><h2>👤 會員登入</h2>
+      <p class="muted" style="margin-bottom:14px;">請輸入您的手機號碼以查詢累積點數。<br><small>(測試帳號請輸入 0912345678)</small></p>
+      <input type="tel" class="inp" style="text-align:center;font-size:20px;letter-spacing:2px;margin-bottom:12px;" data-bind="modal.phone" value="${esc(ui.modal.phone||'')}" placeholder="例如: 0912345678">
+      <button class="btn pri" style="width:100%" data-act="doCusLogin">登入</button></div></div>`;
+  }
   if (ui.modal.type === 'item') {
     const it = S.menu.find(x => x.id === ui.modal.id); const sel = ui.modal.sel; const price = unitOf(it, sel) * ui.modal.qty;
     return `<div class="modal" data-act="mclose"><div class="mp" data-stop><div class="row" style="align-items:flex-start">${it.img ? `<img src="${it.img}" style="width:64px;height:64px;border-radius:12px;object-fit:cover;">` : ''}
@@ -705,6 +699,14 @@ const H = {
     else toast('密碼錯誤');
   },
   openCustomerView: () => { ui.tab = 'customer'; render(); }, exitCustomerView: () => { ui.tab = 'counter'; render(); },
+  openCusLogin: () => { ui.modal = { type: 'cusLogin', phone: '' }; },
+  doCusLogin: () => {
+    const p = (ui.modal.phone || '').trim();
+    if(!p) return toast('請輸入手機號碼');
+    if(S.members[p]) { ui.cusLoginPhone = p; ui.modal = null; toast('登入成功'); } 
+    else { toast('找不到此會員，請請店內人員幫你設定'); }
+  },
+  doCusLogout: () => { ui.cusLoginPhone = ''; toast('已登出'); },
   setSSType: el => { S.settings.ssType = el.dataset.v; saveStore(); render(); },
   mtab: el => { ui.tab = el.dataset.v; }, mclose: el => { ui.modal = null; }, atab: el => { ui.atab = el.dataset.v; },
   cat: el => { ui.cat = el.dataset.v; },
