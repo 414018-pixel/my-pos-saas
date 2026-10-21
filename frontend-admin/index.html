@@ -106,9 +106,6 @@ th{font-size:12px;color:var(--muted);font-weight:500}
 .ss-box.on { border-color: var(--brand-orange); box-shadow: 0 0 0 1px var(--brand-orange); }
 .ss-icon { width: 50px; height: 60px; border: 2px solid var(--line); border-radius: 6px; display: grid; place-items: center; font-size: 24px; background: #fbfbfb; transition: 0.2s; }
 .ss-box.on .ss-icon { border-color: var(--brand-orange); color: var(--brand-orange); background: #fffaf0; }
-.cus-wrap { max-width: 480px; margin: 0 auto; background: var(--surface); min-height: 100vh; padding-bottom: 80px; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
-.cus-btn-huge { display: block; width: 100%; border: 1px solid var(--brand-orange); color: var(--brand-orange); text-align: center; padding: 14px; border-radius: 8px; font-weight: 700; font-size: 16px; margin: 20px 0; background: transparent; cursor: pointer; }
-.cus-btn-huge:hover { background: #fffaf0; }
 @media print{.wrap,.toast,.modal,.scrim,.top-r{display:none!important}body{background:white;padding:0;margin:0}#print-zone{display:block!important; color:#000; font-family:'Courier New', monospace; font-size:14px;}}
 </style>
 </head>
@@ -187,13 +184,13 @@ const ui = {
   locked: true, tab: 'counter', cat: '全部', q: '', cart: [], cartOpen: false, cview: 'list',
   co: { type: 'take', table: '3', name: '', phone: '', addr: '', coupon: '', usePts: false, pay: 'cash', note: '' },
   modal: null, op: 0, pendingOp: null, inputMgrPin: '', ofilter: 'all', oq: '', atab: 'store', edit: null,
-  newCoupon: { code: '', desc: '', type: 'amt', v: 10, min: 0 }, inputPin: '', newStaff: { name: '', role: 'staff' }, newStoreName: '', newStorePin: '',
-  cusLoginPhone: '' // 前台顧客登入用狀態
+  newCoupon: { code: '', desc: '', type: 'amt', v: 10, min: 0 }, inputPin: '', newStaff: { name: '', role: 'staff' }, newStoreName: '', newStorePin: ''
 };
 
 const cur = () => S.staff[ui.op] || S.staff[0];
 const can = p => cur().role === 'admin' || !!(S.perms[cur().role] && S.perms[cur().role][p]);
 const hm = t => new Date(t).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', hour12: false });
+const mins = t => Math.max(0, Math.floor((Date.now() - t) / 60000));
 
 function logit(msg) { S.log.unshift({ t: Date.now(), who: cur().name, msg }); S.log = S.log.slice(0, 80); }
 
@@ -209,34 +206,6 @@ function saveStore() {
     localStorage.setItem(LS_REGISTRY, JSON.stringify(registry)); 
     localStorage.setItem(LS_CURRENT, currentPin); 
   } catch(e) { toast('儲存失敗！'); }
-}
-
-function shell() {
-  if (ui.locked) {
-    return `<div style="display:grid;place-items:center;min-height:80vh;"><div class="card" style="text-align:center;width:min(320px,100%)">
-      <h2>🔒 系統登入</h2><p class="muted">請輸入店家密碼 (管理員 0000)</p>
-      <input type="password" class="inp" style="text-align:center;font-size:24px;letter-spacing:4px;margin-bottom:12px;" data-bind="inputPin" value="${esc(ui.inputPin)}">
-      <button class="btn pri" style="width:100%" data-act="submitPin">進入系統</button></div></div>`;
-  }
-  if (isSysAdmin) return `<header class="top"><div class="brand"><span class="mark">系</span><div><b>超級管理員</b></div></div><div class="top-r"><button class="btn sm danger" data-act="lockAdmin">登出</button></div></header><main><div class="wrap">${vSysAdmin()}</div></main>${modalHtml()}`;
-  if (ui.tab === 'customer') return vCustomer() + modalHtml();
-
-  const pend = S.orders.filter(o => o.status === 'pending').length; 
-  const r = cur().role; const tabs = [];
-  if (r !== 'kitchen') tabs.push(['counter', '櫃台接單']); 
-  tabs.push(['kitchen', '出餐看板']); 
-  if (r !== 'kitchen') tabs.push(['tables', '桌位管理']); 
-  tabs.push(['admin', '後台管理']);
-  
-  if (!tabs.find(t => t[0] === ui.tab)) ui.tab = tabs[0][0]; 
-  let body = ui.tab === 'counter' ? vCounter() : ui.tab === 'kitchen' ? vKitchen() : ui.tab === 'tables' ? vTables() : vAdmin();
-  
-  return `<div class="wrap"><header class="top"><div class="brand"><span class="mark">商</span><div><b>${esc(registry[currentPin])}</b></div></div>
-    <div class="top-r"><button class="btn sm" data-act="openCustomerView" style="background:var(--brand-orange);color:#fff;border:none;">📱 線上點餐預覽</button>
-    <label class="op">角色：<select data-act="requestRoleChange">${S.staff.map((s, i) => `<option value="${i}" ${i === ui.op ? 'selected' : ''}>${esc(s.name)} (${ROLE[s.role]})</option>`).join('')}</select></label>
-    <button class="btn sm danger" data-act="lockAdmin">登出</button></div>
-    <nav class="tabs">${tabs.map(t => `<button class="tab ${ui.tab === t[0] ? 'on' : ''}" data-act="mtab" data-v="${t[0]}">${t[1]}${t[0] === 'kitchen' && pend ? `<span class="badge">${pend}</span>` : ''}</button>`).join('')}</nav></header>
-    <main>${body}</main></div>${modalHtml()}`;
 }
 
 /* ================= 核心邏輯 ================= */
@@ -514,6 +483,34 @@ function aOrderSet() {
       </div>
     </div>
   </div>`;
+}
+
+function shell() {
+  if (ui.locked) {
+    return `<div style="display:grid;place-items:center;min-height:80vh;"><div class="card" style="text-align:center;width:min(320px,100%)">
+      <h2>🔒 系統登入</h2><p class="muted">請輸入店家密碼 (管理員 0000)</p>
+      <input type="password" class="inp" style="text-align:center;font-size:24px;letter-spacing:4px;margin-bottom:12px;" data-bind="inputPin" value="${esc(ui.inputPin)}">
+      <button class="btn pri" style="width:100%" data-act="submitPin">進入系統</button></div></div>`;
+  }
+  if (isSysAdmin) return `<header class="top"><div class="brand"><span class="mark">系</span><div><b>超級管理員</b></div></div><div class="top-r"><button class="btn sm danger" data-act="lockAdmin">登出</button></div></header><main><div class="wrap">${vSysAdmin()}</div></main>${modalHtml()}`;
+  if (ui.tab === 'customer') return vCustomer() + modalHtml();
+
+  const pend = S.orders.filter(o => o.status === 'pending').length; 
+  const r = cur().role; const tabs = [];
+  if (r !== 'kitchen') tabs.push(['counter', '櫃台接單']); 
+  tabs.push(['kitchen', '出餐看板']); 
+  if (r !== 'kitchen') tabs.push(['tables', '桌位管理']); 
+  tabs.push(['admin', '後台管理']);
+  
+  if (!tabs.find(t => t[0] === ui.tab)) ui.tab = tabs[0][0]; 
+  let body = ui.tab === 'counter' ? vCounter() : ui.tab === 'kitchen' ? vKitchen() : ui.tab === 'tables' ? vTables() : vAdmin();
+  
+  return `<div class="wrap"><header class="top"><div class="brand"><span class="mark">商</span><div><b>${esc(registry[currentPin])}</b></div></div>
+    <div class="top-r"><button class="btn sm" data-act="openCustomerView" style="background:var(--brand-orange);color:#fff;border:none;">📱 線上點餐預覽</button>
+    <label class="op">角色：<select data-act="requestRoleChange">${S.staff.map((s, i) => `<option value="${i}" ${i === ui.op ? 'selected' : ''}>${esc(s.name)} (${ROLE[s.role]})</option>`).join('')}</select></label>
+    <button class="btn sm danger" data-act="lockAdmin">登出</button></div>
+    <nav class="tabs">${tabs.map(t => `<button class="tab ${ui.tab === t[0] ? 'on' : ''}" data-act="mtab" data-v="${t[0]}">${t[1]}${t[0] === 'kitchen' && pend ? `<span class="badge">${pend}</span>` : ''}</button>`).join('')}</nav></header>
+    <main>${body}</main></div>${modalHtml()}`;
 }
 
 // ★ 顧客前台頁面 (結合登入與會員點數) ★
